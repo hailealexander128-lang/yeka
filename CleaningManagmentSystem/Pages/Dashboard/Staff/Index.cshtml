@@ -1,0 +1,368 @@
+@page
+@model CleaningManagmentSystem.Pages.Dashboard.Staff.IndexModel
+@{
+    Layout = "/Pages/Dashboard/Staff/_StaffLayout.cshtml";
+    ViewData["Title"] = "Staff Dashboard";
+}
+
+<div class="main-content p-4">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+            <h1 class="h2">
+                <i class="bi bi-speedometer2 me-2"></i>Staff Dashboard
+            </h1>
+            <span class="badge bg-primary">Staff</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+                @Model.Message
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Quick Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-primary mb-2">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <h6 class="card-title">Weredas</h6>
+                        <p class="h3 fw-bold text-primary">@Model.Weredas.Count</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-success mb-2">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h6 class="card-title">Mahberats</h6>
+                        <p class="h3 fw-bold text-success">@Model.Mahberats.Count</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-warning mb-2">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h6 class="card-title">Vehicles</h6>
+                        <p class="h3 fw-bold text-warning">@Model.Vehicles.Count</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-info mb-2">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h6 class="card-title">Drivers</h6>
+                        <p class="h3 fw-bold text-info">@Model.Drivers.Count</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Receipts by Wereda</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="weredaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Kilogram Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Receipt Form -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h4 class="card-title mb-4">
+                    <i class="bi bi-clipboard-plus me-2"></i>
+                    Register New Receipt
+                </h4>
+
+                <form method="post">
+                    <div class="row g-3">
+                        <!-- Wereda -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Choose Your Wereda</label>
+                            <select class="form-select form-select-lg" asp-for="WeredaId" required>
+                                <option value="">-- Select Wereda --</option>
+                                @foreach (var w in Model.Weredas)
+                                {
+                                    <option value="@w.Id">@w.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="WeredaId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Mahaber -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Choose Your Mahaber</label>
+                            <select class="form-select form-select-lg" asp-for="MahberatId" required>
+                                <option value="">-- Select Mahaber --</option>
+                                @foreach (var m in Model.Mahberats)
+                                {
+                                    <option value="@m.Id">@m.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="MahberatId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Plate Number -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Choose Your Plate Number</label>
+                            <select class="form-select form-select-lg" asp-for="VehicleId" required>
+                                <option value="">-- Select Plate Number --</option>
+                                @foreach (var v in Model.Vehicles)
+                                {
+                                    <option value="@v.Id">@v.PlateNumber</option>
+                                }
+                            </select>
+                            <span asp-validation-for="VehicleId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Driver -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Choose Your Driver</label>
+                            <select class="form-select form-select-lg" asp-for="DriverId" required>
+                                <option value="">-- Select Driver --</option>
+                                @foreach (var d in Model.Drivers)
+                                {
+                                    <option value="@d.Id">@d.FullName</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DriverId" class="text-danger"></span>
+                        </div>
+
+<!-- Time -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Enter Your Time</label>
+                                <input type="time" class="form-control form-control-lg" asp-for="TimeString" required />
+                                <span asp-validation-for="TimeString" class="text-danger"></span>
+                            </div>
+
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Enter Your Date</label>
+                            <input type="date" class="form-control form-control-lg" asp-for="Date" required />
+                            <span asp-validation-for="Date" class="text-danger"></span>
+                        </div>
+
+                        <!-- Kilogram -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Enter Your Kilogram</label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control form-control-lg" asp-for="Kilogram" placeholder="Enter Kilogram" step="0.01" min="0.01" required />
+                                <span class="input-group-text">kg</span>
+                            </div>
+                            <span asp-validation-for="Kilogram" class="text-danger"></span>
+                        </div>
+
+                        <!-- Price per kg -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Enter Price per kg (ETB)</label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control form-control-lg" asp-for="Price" placeholder="Enter price per kg" step="0.01" min="0.01" required />
+                                <span class="input-group-text">ETB/kg</span>
+                            </div>
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="col-12 mt-4">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Register Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Receipts Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Recent Receipts
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Wereda</th>
+                                <th>Mahberat / Company</th>
+                                <th>Plate</th>
+                                <th>Driver</th>
+                                <th>Kilogram</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Price in ETB</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.RecentReceipts != null && Model.RecentReceipts.Any())
+                            {
+                                foreach (var r in Model.RecentReceipts)
+                                {
+                                    <tr>
+                                        <td>@(((DateTime)r.receipt_date).ToString("yyyy-MM-dd"))</td>
+                                        <td>@(((TimeSpan)r.receipt_time).ToString(@"hh\:mm"))</td>
+                                        <td>@r.wereda_name</td>
+                                        <td>@r.mahberat_name</td>
+                                        <td><strong>@r.plate_number</strong></td>
+                                        <td>@r.driver_name</td>
+                                        <td><span class="badge bg-primary">@((decimal)r.kilogram) kg</span></td>
+                                        <td>
+                                            @if (r.receipt_type == "Outsource")
+                                            {
+                                                <span class="badge bg-info">Outsource</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-primary">Mahberat</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (r.status == "Approved")
+                                            {
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success">Approved</span>
+                                            }
+                                            else if (r.status == "Pending")
+                                            {
+                                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Pending</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">@r.status</span>
+                                            }
+                                        </td>
+                                        <td><span class="badge bg-success">@(((decimal)r.total_price).ToString("N2")) ETB</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        No receipts found
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var weredaCtx = document.getElementById('weredaChart').getContext('2d');
+            new Chart(weredaCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.ChartLabels)),
+                    datasets: [{
+                        data: @Html.Raw(Json.Serialize(Model.ChartValues)),
+                        backgroundColor: ['#008080', '#006666', '#009999', '#00cccc', '#339999', '#66cccc']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            var trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.TrendLabels)),
+                    datasets: [{
+                        label: 'Kilograms',
+                        data: @Html.Raw(Json.Serialize(Model.TrendValues)),
+                        borderColor: '#008080',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .form-select:focus, .form-control:focus {
+        border-color: #008080;
+        box-shadow: 0 0 0 0.25rem rgba(0, 128, 128, 0.25);
+    }
+    
+    .btn-primary {
+        background-color: #008080;
+        border-color: #008080;
+    }
+    
+    .btn-primary:hover {
+        background-color: #006666;
+        border-color: #006666;
+    }
+    
+    .chart-container canvas {
+        max-height: 280px;
+    }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+</style>

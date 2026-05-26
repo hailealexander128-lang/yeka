@@ -1,0 +1,91 @@
+using Microsoft.AspNetCore.Http;
+using CleaningManagmentSystem.Data;
+using CleaningManagmentSystem.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorPages();
+builder.Services.AddControllers(); // Added for Mobile API
+builder.Services.AddSingleton<EmailService>();
+
+// Add CORS support
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Add session with explicit cookie settings
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Name = ".Yeka.Session";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+
+var app = builder.Build();
+
+// Initialize and seed database
+Console.WriteLine("[Startup] Initializing database...");
+try
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        await DatabaseSeeder.SeedAsync(connectionString);
+        Console.WriteLine("[Startup] Database initialization completed");
+    }
+    else
+    {
+        Console.WriteLine("[Startup] Warning: DefaultConnection not configured in appsettings.json");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[Startup] Database initialization error: {ex.Message}");
+}
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseStaticFiles();
+app.UseRouting();
+app.UseCors("AllowAll"); // Enable CORS
+app.UseSession();
+
+app.Use(async (context, next) =>
+{
+    var userId = context.Session.GetInt32("UserId");
+    var userName = context.Session.GetString("UserName");
+    Console.WriteLine($"[Request] {context.Request.Path} - UserId: {userId}, UserName: {userName}");
+    await next();
+});
+
+app.UseAuthorization();
+
+// Redirect old /Dashboard/Staff to /Dashboard/Staff/Index
+app.MapGet("/Dashboard/Staff", (HttpContext context) =>
+{
+    context.Response.Redirect("/Dashboard/Staff/Index");
+    return Results.Empty;
+});
+
+app.MapStaticAssets();
+app.MapRazorPages()
+   .WithStaticAssets();
+app.MapControllers(); // Added for Mobile API
+
+Console.WriteLine("[Startup] Application running on http://localhost:5000");
+app.Run("http://localhost:5000");

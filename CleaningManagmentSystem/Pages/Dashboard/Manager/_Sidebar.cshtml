@@ -1,0 +1,75 @@
+@{
+    var currentPath = Context.Request.Path.Value ?? "";
+    
+    bool IsActive(string path, bool exact = false)
+    {
+        if (exact)
+        {
+            return currentPath.Equals(path, StringComparison.OrdinalIgnoreCase);
+        }
+        return currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+    }
+}
+<div class="pt-3">
+    <div class="pb-3 mb-3 border-bottom text-center">
+        <h5 class="text-white fw-bold"><i class="bi bi-droplet-fill text-info me-1"></i>Yeka Cleaning</h5>
+        <small class="text-white-50">Manager</small>
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager", true) ? "active" : "")" href="/Dashboard/Manager">
+                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Weredas") ? "active" : "")" href="/Dashboard/Manager/Weredas">
+                <i class="bi bi-geo-alt me-2"></i>Weredas
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Mahberats") ? "active" : "")" href="/Dashboard/Manager/Mahberats">
+                <i class="bi bi-people me-2"></i>Mahberats
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Vehicles") ? "active" : "")" href="/Dashboard/Manager/Vehicles">
+                <i class="bi bi-truck me-2"></i>Vehicles
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Drivers") ? "active" : "")" href="/Dashboard/Manager/Drivers">
+                <i class="bi bi-person-badge me-2"></i>Drivers
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/OutsourceCompany") ? "active" : "")" href="/Dashboard/Manager/OutsourceCompany">
+                <i class="bi bi-building me-2"></i>Outsource Companies
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Staff") ? "active" : "")" href="/Dashboard/Manager/Staff">
+                <i class="bi bi-people me-2"></i>My Staff
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Approvals", true) ? "active" : "")" href="/Dashboard/Manager/Approvals">
+                <i class="bi bi-check2-square me-2"></i>Approvals
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Tasks") ? "active" : "")" href="/Dashboard/Manager/Tasks">
+                <i class="bi bi-clipboard-check me-2"></i>Tasks
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(IsActive("/Dashboard/Manager/Settings") ? "active" : "")" href="/Dashboard/Manager/Settings">
+                <i class="bi bi-gear me-2"></i>Settings
+            </a>
+        </li>
+        <li class="nav-item mt-4">
+            <a class="nav-link text-warning fw-semibold" href="/Login?logout=1">
+                <i class="bi bi-box-arrow-left me-2"></i>Logout
+            </a>
+        </li>
+    </ul>
+</div>
