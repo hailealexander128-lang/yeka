@@ -43,7 +43,9 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
         public decimal Price { get; set; }
 
-        // Edit properties
+        // ── Defaults from Manager Settings (pre-fill) ──
+        public decimal DefaultPricePerKg { get; set; } = 1.4m;
+        public decimal DefaultKg         { get; set; } = 0m;        // Edit properties
         [BindProperty(SupportsGet = true)]
         public int EditId { get; set; }
 
@@ -69,6 +71,19 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
         [BindProperty(SupportsGet = true)]
         public DateTime? FilterEndDate { get; set; }
 
+        // ── From Approval redirect ──
+        [BindProperty(SupportsGet = true)]
+        public string? FromApproval { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? ApprovedReceiptId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? ApprovedType { get; set; }
+
+        // Pre-filled from approval
+        public dynamic? PrefilledReceipt { get; set; }
+
         public List<Wereda> Weredas { get; set; } = new();
         public List<Mahberat> Mahberats { get; set; } = new();
         public List<Vehicle> Vehicles { get; set; } = new();
@@ -88,10 +103,45 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             var userName = HttpContext.Session.GetString("UserName");
             var userRole = HttpContext.Session.GetString("UserRole");
 
-            if (string.IsNullOrEmpty(userName) || userRole?.ToLower() != "staff")
+            if (string.IsNullOrEmpty(userName) ||
+                (userRole?.ToLower() != "staff" && userRole?.ToLower() != "manager"))
                 return RedirectToPage("/Login");
 
             LoadData();
+            LoadDefaults();
+
+            // Pre-fill from Approval redirect
+            if (FromApproval == "true" && ApprovedReceiptId.HasValue && ApprovedReceiptId > 0)
+            {
+                try
+                {
+                    using var conn = new MySqlConnection(_connectionString);
+                    var tbl = ApprovedType == "Outsource" ? "outsource_receipts" : "staff_receipts";
+                    PrefilledReceipt = conn.QueryFirstOrDefault<dynamic>(
+                        $"SELECT * FROM {tbl} WHERE id = @Id", new { Id = ApprovedReceiptId.Value });
+
+                    if (PrefilledReceipt != null)
+                    {
+                        // Pre-fill form fields from the approved receipt
+                        WeredaId   = (int)(PrefilledReceipt.wereda_id ?? 0);
+                        MahberatId = (int)(PrefilledReceipt.mahberat_id ?? 0);
+                        VehicleId  = (int)(PrefilledReceipt.vehicle_id ?? 0);
+                        DriverId   = (int)(PrefilledReceipt.driver_id  ?? 0);
+                        Kilogram   = (decimal)(PrefilledReceipt.kilogram ?? 0m);
+                        Price      = (decimal)(PrefilledReceipt.price   ?? DefaultPricePerKg);
+                        Date       = (DateTime)(PrefilledReceipt.receipt_date ?? DateTime.Today);
+                        TimeString = PrefilledReceipt.receipt_time?.ToString() ?? DateTime.Now.ToString("HH:mm");
+
+                        Message   = $"✓ Receipt #{ApprovedReceiptId} approved — review details below and click Register to complete billing.";
+                        IsSuccess = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RegisterReceipt] Prefill error: {ex.Message}");
+                }
+            }
+
             return Page();
         }
 
@@ -100,12 +150,14 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             var userName = HttpContext.Session.GetString("UserName");
             var userRole = HttpContext.Session.GetString("UserRole");
 
-            if (string.IsNullOrEmpty(userName) || userRole?.ToLower() != "staff")
+            if (string.IsNullOrEmpty(userName) ||
+                (userRole?.ToLower() != "staff" && userRole?.ToLower() != "manager"))
                 return RedirectToPage("/Login");
 
             if (!ModelState.IsValid)
             {
                 LoadData();
+                LoadDefaults();
                 return Page();
             }
 
@@ -160,6 +212,86 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
                 Message = "Receipt registered successfully!";
                 IsSuccess = true;
 
+                // ── If coming from an Approval, finalize transport_request as Paid ──
+                if (FromApproval == "true" && ApprovedReceiptId.HasValue && ApprovedReceiptId > 0)
+                {
+                    try
+                    {
+                        using var conn2 = new MySqlConnection(_connectionString);
+                        var tbl = ApprovedType == "Outsource" ? "outsource_receipts" : "staff_receipts";
+
+                        // Get transport_request_id linked to this receipt
+                        var trId = conn2.QueryFirstOrDefault<int?>(
+                            $"SELECT transport_request_id FROM {tbl} WHERE id = @Id",
+                            new { Id = ApprovedReceiptId.Value });
+
+                        if (trId.HasValue && trId.Value > 0)
+                        {
+                            var tr = conn2.QueryFirstOrDefault<dynamic>(
+                                "SELECT * FROM transport_requests WHERE id = @Id",
+                                new { Id = trId.Value });
+
+                            if (tr != null)
+                            {
+                                decimal cost = Kilogram * Price;
+
+                                // Mark as Paid
+                                conn2.Execute(
+                                    @"UPDATE transport_requests
+                                      SET status               = 'Paid',
+                                          transport_cost       = @Cost,
+                                          staff_action_at      = NOW(),
+                                          paid_at              = NOW(),
+                                          transaction_number   = @TxNum
+                                      WHERE id = @Id",
+                                    new {
+                                        Cost  = cost,
+                                        TxNum = $"TXN-{DateTime.Now:yyyyMMddHHmmss}",
+                                        Id    = trId.Value
+                                    });
+
+                                // Mark staff_receipts as Billed
+                                conn2.Execute(
+                                    $"UPDATE {tbl} SET status = 'Billed' WHERE id = @Id",
+                                    new { Id = ApprovedReceiptId.Value });
+
+                                // Insert into monthly_receipts
+                                string rNum = (string)tr.request_number;
+                                string mahbName = GetMahberatName(MahberatId);
+                                string src = $"Transport | {tr.pickup_location} → {tr.destination} | Mahberat: {mahbName} | Driver: {driverName} | {Kilogram} KG | By {userName}";
+
+                                var existing = conn2.QueryFirstOrDefault<int>(
+                                    "SELECT COUNT(*) FROM monthly_receipts WHERE receipt_number = @Num",
+                                    new { Num = rNum });
+
+                                if (existing == 0)
+                                    conn2.Execute(
+                                        @"INSERT INTO monthly_receipts
+                                          (receipt_number, month, year, total_amount, paid_amount,
+                                           balance, status, source, created_at, updated_at)
+                                          VALUES (@Num, @Month, @Year, @Total, @Total, 0, 'Billed', @Source, NOW(), NOW())",
+                                        new {
+                                            Num    = rNum,
+                                            Month  = DateTime.Now.ToString("MMMM"),
+                                            Year   = DateTime.Now.Year,
+                                            Total  = cost,
+                                            Source = src
+                                        });
+                                else
+                                    conn2.Execute(
+                                        "UPDATE monthly_receipts SET status='Billed', total_amount=@Total, paid_amount=@Total, updated_at=NOW() WHERE receipt_number=@Num",
+                                        new { Total = cost, Num = rNum });
+
+                                Message = $"Receipt registered and transport request {rNum} marked as Paid & Billed!";
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[RegisterReceipt] Finalize transport error: {ex.Message}");
+                    }
+                }
+
                 // Reset form fields
                 WeredaId = 0;
                 MahberatId = 0;
@@ -179,6 +311,7 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             }
 
             LoadData();
+            LoadDefaults();
             return Page();
         }
 
@@ -517,6 +650,30 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             {
                 return "";
             }
+        }
+
+        private void LoadDefaults()
+        {
+            try
+            {
+                using var conn = new MySqlConnection(_connectionString);
+
+                // system_settings table may not exist yet — ignore errors
+                try
+                {
+                    var priceVal = conn.QueryFirstOrDefault<string>(
+                        "SELECT setting_value FROM system_settings WHERE setting_key = 'DefaultPricePerKg'");
+                    if (priceVal != null && decimal.TryParse(priceVal, out var p))
+                        DefaultPricePerKg = p;
+
+                    var kgVal = conn.QueryFirstOrDefault<string>(
+                        "SELECT setting_value FROM system_settings WHERE setting_key = 'DefaultKg'");
+                    if (kgVal != null && decimal.TryParse(kgVal, out var k))
+                        DefaultKg = k;
+                }
+                catch { /* table doesn't exist yet */ }
+            }
+            catch { /* ignore */ }
         }
 
         private void LoadData()

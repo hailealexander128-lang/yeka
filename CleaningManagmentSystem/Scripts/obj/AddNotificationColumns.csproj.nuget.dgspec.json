@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj": {}
+    "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj": {
+    "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj",
+        "projectUniqueName": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj",
         "projectName": "CleaningManagmentSystem",
-        "projectPath": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj",
-        "packagesPath": "C:\\Users\\ict\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\obj\\",
+        "projectPath": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj",
+        "packagesPath": "C:\\Users\\2M\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ict\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\2M\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -492,17 +492,17 @@
         }
       }
     },
-    "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj": {
+    "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj",
+        "projectUniqueName": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj",
         "projectName": "AddNotificationColumns",
-        "projectPath": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj",
-        "packagesPath": "C:\\Users\\ict\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\obj\\",
+        "projectPath": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\AddNotificationColumns.csproj",
+        "packagesPath": "C:\\Users\\2M\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ict\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\2M\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -515,8 +515,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj": {
-                "projectPath": "C:\\Users\\ict\\Videos\\bb\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj"
+              "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj": {
+                "projectPath": "C:\\Users\\2M\\Pictures\\CleaningManagmentSystem\\CleaningManagmentSystem\\CleaningManagmentSystem.csproj"
               }
             }
           }

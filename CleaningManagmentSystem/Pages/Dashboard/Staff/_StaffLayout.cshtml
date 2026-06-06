@@ -7,10 +7,11 @@
 <!-- Desktop Navbar -->
 <nav class="navbar navbar-dark dashboard-navbar fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/Dashboard/Staff/Index"><i class="bi bi-droplet-fill"></i> Yeka Cleaning</a>
+        <a class="navbar-brand" href="/Dashboard/Staff/Index" data-i18n="nav_brand"><i class="bi bi-droplet-fill"></i> Yeka Cleaning</a>
         <div class="nav-user">
-            <span>Welcome, @(Context.Session.GetString("UserName") ?? "User")</span>
-            <a class="btn-logout" href="/Login?logout=1"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            <select id="languageSelect" class="form-select form-select-sm border-light text-dark" style="width: auto; display: inline-block; margin-right: 1rem;"></select>
+            <span data-i18n="dashboard_welcome">Welcome,</span> @(Context.Session.GetString("UserName") ?? "User")
+            <a class="btn-logout" href="/Login?logout=1" data-i18n="nav_logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </div>
     </div>
 </nav>

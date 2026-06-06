@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MySqlConnector;
 using Dapper;
+using CleaningManagmentSystem.Models;
+using System.Text.Json;
 
 namespace CleaningManagmentSystem.Pages.Dashboard.Staff
 {
@@ -19,10 +21,16 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
         public string ReportDescription { get; set; } = "";
 
         [BindProperty]
+        public string Category { get; set; } = "Performance";
+
+        [BindProperty]
+        public string Period { get; set; } = "Monthly";
+
+        [BindProperty]
         public string YakaZone { get; set; } = "";
 
         [BindProperty]
-        public DateTime ReportDate { get; set; }
+        public DateTime ReportDate { get; set; } = DateTime.Now;
 
         [BindProperty]
         public string AttachmentUrl { get; set; } = "";
@@ -30,7 +38,8 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
         [BindProperty]
         public string Status { get; set; } = "Pending";
 
-        public List<YakaReport> YakaReports { get; set; } = new();
+        public List<CleaningManagmentSystem.Models.YakaReport> YakaReports { get; set; } = new();
+        public string ReportDataJson { get; set; } = "[]";
         public string ErrorMessage { get; set; } = "";
 
         public YakaReportModel(IConfiguration configuration)
@@ -58,8 +67,21 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             {
                 using var connection = new MySqlConnection(_connectionString);
                 connection.Execute(
-                    "INSERT INTO yaka_reports (report_title, report_description, yaka_zone, report_date, attachment_url, status) VALUES (@ReportTitle, @ReportDescription, @YakaZone, @ReportDate, @AttachmentUrl, @Status)",
-                    new { ReportTitle, ReportDescription, YakaZone, ReportDate, AttachmentUrl, Status });
+                    @"INSERT INTO yaka_reports 
+                        (report_number, title, category, description, period, file_path, generated_by, generated_at, created_at)
+                      VALUES 
+                        (@ReportNumber, @Title, @Category, @Description, @Period, @FilePath, @GeneratedBy, @GeneratedAt, NOW())",
+                    new 
+                    {
+                        ReportNumber = $"YKA-{DateTime.Now:yyyyMMddHHmmss}",
+                        Title = ReportTitle,
+                        Category = string.IsNullOrWhiteSpace(Category) ? "Performance" : Category,
+                        Description = ReportDescription,
+                        Period = string.IsNullOrWhiteSpace(Period) ? "Monthly" : Period,
+                        FilePath = AttachmentUrl,
+                        GeneratedBy = userId.Value,
+                        GeneratedAt = ReportDate
+                    });
             }
             catch (Exception ex)
             {
@@ -80,8 +102,24 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
             {
                 using var connection = new MySqlConnection(_connectionString);
                 connection.Execute(
-                    "UPDATE yaka_reports SET report_title = @ReportTitle, report_description = @ReportDescription, yaka_zone = @YakaZone, report_date = @ReportDate, attachment_url = @AttachmentUrl, status = @Status WHERE id = @Id",
-                    new { Id, ReportTitle, ReportDescription, YakaZone, ReportDate, AttachmentUrl, Status });
+                    @"UPDATE yaka_reports SET 
+                        title = @Title,
+                        category = @Category,
+                        description = @Description,
+                        period = @Period,
+                        file_path = @FilePath,
+                        generated_at = @GeneratedAt
+                      WHERE id = @Id",
+                    new 
+                    {
+                        Id,
+                        Title = ReportTitle,
+                        Category = string.IsNullOrWhiteSpace(Category) ? "Performance" : Category,
+                        Description = ReportDescription,
+                        Period = string.IsNullOrWhiteSpace(Period) ? "Monthly" : Period,
+                        FilePath = AttachmentUrl,
+                        GeneratedAt = ReportDate
+                    });
             }
             catch (Exception ex)
             {
@@ -114,19 +152,66 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Staff
 
         private void LoadReports()
         {
-            using var connection = new MySqlConnection(_connectionString);
-            YakaReports = connection.Query<YakaReport>("SELECT * FROM yaka_reports ORDER BY report_date DESC").ToList();
-        }
-    }
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                YakaReports = connection.Query<CleaningManagmentSystem.Models.YakaReport>(@"
+                    SELECT 
+                        id AS Id,
+                        report_number AS ReportNumber,
+                        title AS Title,
+                        category AS Category,
+                        description AS Description,
+                        period AS Period,
+                        file_path AS FilePath,
+                        generated_by AS GeneratedBy,
+                        generated_at AS GeneratedAt,
+                        created_at AS CreatedAt
+                    FROM yaka_reports
+                    ORDER BY generated_at DESC").ToList();
 
-    public class YakaReport
-    {
-        public int Id { get; set; }
-        public string ReportTitle { get; set; } = "";
-        public string ReportDescription { get; set; } = "";
-        public string YakaZone { get; set; } = "";
-        public DateTime ReportDate { get; set; }
-        public string AttachmentUrl { get; set; } = "";
-        public string Status { get; set; } = "Pending";
+                ReportDataJson = BuildReportDataJson();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                YakaReports = new List<CleaningManagmentSystem.Models.YakaReport>();
+                ReportDataJson = "[]";
+            }
+        }
+
+        private string BuildReportDataJson()
+        {
+            var rows = YakaReports.Select(report => new
+            {
+                category = NormalizeCategory(report.Category),
+                subcategory = string.IsNullOrWhiteSpace(report.Period) ? "Monthly" : report.Period,
+                code = string.IsNullOrWhiteSpace(report.ReportNumber) ? $"YKA-{report.Id:D4}" : report.ReportNumber,
+                name = string.IsNullOrWhiteSpace(report.Title) ? "Untitled Yaka Report" : report.Title,
+                qty = 1,
+                rate = string.IsNullOrWhiteSpace(report.FilePath) ? 80m : 100m,
+                catKey = NormalizeCategory(report.Category),
+                status = string.IsNullOrWhiteSpace(report.FilePath) ? "Pending" : "Approved",
+                date = report.GeneratedAt != default ? report.GeneratedAt.ToString("yyyy-MM-dd") : DateTime.Now.ToString("yyyy-MM-dd")
+            }).ToList();
+
+            return JsonSerializer.Serialize(rows, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+        }
+
+        private static string NormalizeCategory(string? category)
+        {
+            var normalized = (category ?? string.Empty).Trim().ToLowerInvariant();
+
+            if (normalized.Contains("hr") || normalized.Contains("attendance"))
+                return "HR";
+
+            if (normalized.Contains("oper") || normalized.Contains("equipment"))
+                return "Operations";
+
+            return "Performance";
+        }
     }
 }

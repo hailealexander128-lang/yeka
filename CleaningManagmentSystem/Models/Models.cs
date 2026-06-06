@@ -598,4 +598,161 @@ namespace CleaningManagmentSystem.Models
         public DateTime RecordDate { get; set; }
         public string Notes { get; set; } = "";
     }
+
+    // ─── Mahberat Transport Request & Payment Workflow ───────────────────────
+
+    /// <summary>
+    /// Transport request created by a Mahberat user.
+    /// Status flow:
+    ///   PendingDispatcher → DispatcherApproved → DriverAssigned → DriverAccepted
+    ///   → PickedUp → MahberatApprovedPickup → ReceiptSubmitted → ReceiptVerified
+    ///   → StaffApproved → Paid → Completed
+    /// Alternative: DispatcherRejected | DriverRejected | StaffRejected
+    /// </summary>
+    public class TransportRequest
+    {
+        public int Id { get; set; }
+        public string RequestNumber { get; set; } = "";
+
+        // Requester
+        public int MahberatUserId { get; set; }
+        public string MahberatUserName { get; set; } = "";
+        public int? MahberatId { get; set; }
+        public string MahberatName { get; set; } = "";
+
+        // Trip details
+        public string PickupLocation { get; set; } = "";
+        public string Destination { get; set; } = "";
+        public string PassengerItemDetails { get; set; } = "";
+        public DateTime RequestedDate { get; set; }
+        public string RequestedTime { get; set; } = "";
+        public string SpecialInstructions { get; set; } = "";
+
+        // Dispatcher
+        public int? DispatcherId { get; set; }
+        public string DispatcherName { get; set; } = "";
+        public string DispatcherNotes { get; set; } = "";
+        public DateTime? DispatcherActionAt { get; set; }
+
+        // Driver
+        public int? DriverId { get; set; }
+        public string DriverName { get; set; } = "";
+        public int? VehicleId { get; set; }
+        public string VehiclePlate { get; set; } = "";
+        public string DriverNotes { get; set; } = "";
+        public DateTime? DriverActionAt { get; set; }
+
+        // Pickup confirmation
+        public DateTime? PickupConfirmedAt { get; set; }
+        public string PickupNotes { get; set; } = "";
+        public DateTime? MahberatPickupApprovedAt { get; set; }
+        public string MahberatPickupNotes { get; set; } = "";
+
+        // Receipt
+        public string? ReceiptPhotoUrl { get; set; }
+        public string? DigitalReceiptUrl { get; set; }
+        public string ReceiptNotes { get; set; } = "";
+        public DateTime? ReceiptSubmittedAt { get; set; }
+
+        // Mahberat receipt verification
+        public DateTime? MahberatVerifiedAt { get; set; }
+        public string MahberatVerificationNotes { get; set; } = "";
+
+        // Staff verification
+        public int? StaffId { get; set; }
+        public string StaffName { get; set; } = "";
+        public decimal? TransportCost { get; set; }
+        public string StaffNotes { get; set; } = "";
+        public DateTime? StaffActionAt { get; set; }
+
+        // Payment
+        public int? FinanceStaffId { get; set; }
+        public string FinanceStaffName { get; set; } = "";
+        public string? TransactionNumber { get; set; }
+        public string? PaymentProofUrl { get; set; }
+        public DateTime? PaidAt { get; set; }
+        public string PaymentNotes { get; set; } = "";
+
+        // Status
+        public string Status { get; set; } = "PendingDispatcher";
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    /// <summary>
+    /// Audit log for every status change on a TransportRequest.
+    /// </summary>
+    public class TransportRequestLog
+    {
+        public int Id { get; set; }
+        public int TransportRequestId { get; set; }
+        public string FromStatus { get; set; } = "";
+        public string ToStatus { get; set; } = "";
+        public int ActorUserId { get; set; }
+        public string ActorName { get; set; } = "";
+        public string ActorRole { get; set; } = "";
+        public string Notes { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+
+    /// <summary>
+    /// In-app notification record for transport workflow events.
+    /// </summary>
+    public class TransportNotification
+    {
+        public int Id { get; set; }
+        public int RecipientUserId { get; set; }
+        public int TransportRequestId { get; set; }
+        public string RequestNumber { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Body { get; set; } = "";
+        public string NotificationType { get; set; } = ""; // Info, Success, Warning, Action
+        public bool IsRead { get; set; } = false;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    // ─── WMRAS Request Forms Workflow ───────────────────────
+
+    public class RequestModel
+    {
+        public int Id { get; set; }
+        public int RequestorId { get; set; }
+        public string RequestorRole { get; set; }
+        public int? WeredaId { get; set; }
+        public int? MahberatId { get; set; }
+        public string RequestType { get; set; }
+        public string Description { get; set; }
+        public decimal? Quantity { get; set; }
+        public string Urgency { get; set; }
+        public DateTime? RequestedDateTime { get; set; }
+        public string AttachmentPath { get; set; }
+        public int? AssignedToId { get; set; }
+        public string ExecutionStatus { get; set; }
+        public DateTime? CompletionDate { get; set; }
+        public string ExecutionReportPath { get; set; }
+        public bool IsClosed { get; set; }
+        public int? ClosedById { get; set; }
+        public DateTime? ClosureDate { get; set; }
+        public string ClosureRemarks { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class RequestApproval
+    {
+        public int Id { get; set; }
+        public int RequestId { get; set; }
+        public string Level1Status { get; set; }
+        public int? Level1By { get; set; }
+        public DateTime? Level1Date { get; set; }
+        public string Level1Comments { get; set; }
+        public string Level2Status { get; set; }
+        public int? Level2By { get; set; }
+        public DateTime? Level2Date { get; set; }
+        public string Level2Comments { get; set; }
+        public string Level3Status { get; set; }
+        public int? Level3By { get; set; }
+        public DateTime? Level3Date { get; set; }
+        public string Level3Comments { get; set; }
+    }
 }

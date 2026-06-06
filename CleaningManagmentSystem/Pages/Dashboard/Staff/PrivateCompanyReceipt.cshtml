@@ -1,0 +1,438 @@
+@page
+@model CleaningManagmentSystem.Pages.Dashboard.Staff.PrivateCompanyReceiptModel
+@{
+    Layout = "/Pages/Dashboard/Staff/_StaffLayout.cshtml";
+    ViewData["Title"] = "Private Company Receipt";
+
+    string receiptStepTracker(string status)
+    {
+        bool isRejected = status == "Rejected" || status == "MahberatRejected";
+        if (isRejected)
+        {
+            string who = status == "MahberatRejected" ? "Mahberat (Level 1)" : "Staff (Level 2)";
+            return $@"<div class=""d-flex align-items-center gap-2 py-1"">
+                <span class=""badge bg-danger px-3 py-2""><i class=""bi bi-x-circle me-1""></i>Rejected by {who}</span>
+                <small class=""text-muted"">This receipt was rejected.</small>
+            </div>";
+        }
+        var steps = new[] {
+            ("Registered", "① Registered",     "Staff"),
+            ("Pending",    "② Review",          "Staff"),
+            ("Approved",   "③ Approved",        "Staff"),
+            ("Billed",     "④ Billed",          "Staff"),
+            ("Paid",       "⑤ Paid",            "Finance"),
+        };
+        int idx = status switch {
+            "Registered" => 0,
+            "Pending"    => 1,
+            "Approved"   => 2,
+            "Billed"     => 3,
+            "Paid"       => 4,
+            _            => 0
+        };
+        var sb = new System.Text.StringBuilder();
+        sb.Append(@"<div class=""rcp-flow"">");
+        for (int i = 0; i < steps.Length; i++)
+        {
+            var (key, label, actor) = steps[i];
+            string cls  = i < idx ? "rcp-done" : (i == idx ? "rcp-active" : "");
+            string icon = i < idx ? "✓" : (i + 1).ToString();
+            sb.Append($@"<div class=""rcp-item {cls}"">
+                <div class=""rcp-circle"">{icon}</div>
+                <div class=""rcp-label"">{label}</div>
+                <div class=""rcp-actor"">{actor}</div>
+            </div>");
+        }
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+}
+
+<div class="main-content p-4">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h4 mb-0">
+                <i class="bi bi-building-fill me-2"></i>Staff Dashboard - Private Company Receipts
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item active">Private Company Receipts</li>
+                </ol>
+            </nav>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+                @Model.Message
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-primary mb-2"><i class="bi bi-building"></i></div>
+                        <h6 class="card-title">Private Companies</h6>
+                        <p class="h3 fw-bold text-primary">@Model.Companies.Count()</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-success mb-2"><i class="bi bi-geo-alt"></i></div>
+                        <h6 class="card-title">Weredas</h6>
+                        <p class="h3 fw-bold text-success">@Model.Weredas.Count()</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-warning mb-2"><i class="bi bi-truck"></i></div>
+                        <h6 class="card-title">Vehicles</h6>
+                        <p class="h3 fw-bold text-warning">@Model.Vehicles.Count()</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-info mb-2"><i class="bi bi-person-badge"></i></div>
+                        <h6 class="card-title">Drivers</h6>
+                        <p class="h3 fw-bold text-info">@Model.Drivers.Count()</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filter Receipts</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label fw-bold">Private Company</label>
+                        <select class="form-select" name="FilterCompanyId">
+                            <option value="">-- All Companies --</option>
+                            @foreach (var c in Model.Companies)
+                            {
+                                var cid = (int)c.id;
+                                if (Model.FilterCompanyId == cid)
+                                { <option value="@cid" selected>@c.company_name</option> }
+                                else
+                                { <option value="@cid">@c.company_name</option> }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label fw-bold">Wereda</label>
+                        <select class="form-select" name="FilterWeredaId">
+                            <option value="">-- All Weredas --</option>
+                            @foreach (var w in Model.Weredas)
+                            {
+                                var wid = (int)w.id;
+                                if (Model.FilterWeredaId == wid)
+                                { <option value="@wid" selected>@w.name</option> }
+                                else
+                                { <option value="@wid">@w.name</option> }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label fw-bold">Start Date</label>
+                        <input type="date" class="form-control" name="FilterStartDate"
+                               value="@Model.FilterStartDate?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <label class="form-label fw-bold">End Date</label>
+                        <input type="date" class="form-control" name="FilterEndDate"
+                               value="@Model.FilterEndDate?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3 col-sm-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-search me-2"></i>Filter
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 d-flex align-items-end">
+                        <a href="/Dashboard/Staff/PrivateCompanyReceipt" class="btn btn-outline-secondary btn-lg w-100">
+                            <i class="bi bi-x-circle me-2"></i>Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="bi bi-list me-2"></i>Receipts</h5>
+                <button type="button" class="btn btn-primary btn-lg"
+                        data-bs-toggle="modal" data-bs-target="#registerReceiptModal">
+                    <i class="bi bi-plus-circle me-2"></i>Register New Receipt
+                </button>
+            </div>
+        </div>
+
+        <!-- Receipts Table -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Receipts</h5>
+            </div>
+            <div class="card-body p-0">
+                <form method="post" asp-page-handler="MarkPaid">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Company</th>
+                                <th>Wereda</th>
+                                <th>Plate</th>
+                                <th>Driver</th>
+                                <th>Kilogram</th>
+                                <th>Total (ETB)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.RecentReceipts != null && Model.RecentReceipts.Any())
+                            {
+                                foreach (var r in Model.RecentReceipts)
+                                {
+                                    string statusCls = (r.status?.ToString()) switch {
+                                        "Approved"   => "bg-success bg-opacity-10 text-success border border-success",
+                                        "Billed"     => "bg-primary bg-opacity-10 text-primary border border-primary",
+                                        "Paid"       => "bg-success text-white",
+                                        "Pending"    => "bg-warning bg-opacity-10 text-warning border border-warning",
+                                        _            => "bg-secondary bg-opacity-10 text-secondary border border-secondary"
+                                    };
+                                    decimal tot = (decimal)(r.total_amount ?? 0m);
+                                    string dateStr = r.receipt_date != null ? ((DateTime)r.receipt_date).ToString("yyyy-MM-dd") : "—";
+                                    string timeStr = r.receipt_time != null ? ((TimeSpan)r.receipt_time).ToString(@"hh\:mm") : "—";
+                                    <tr>
+                                        <td>@dateStr</td>
+                                        <td>@timeStr</td>
+                                        <td><strong>@r.company_name</strong></td>
+                                        <td>@(r.wereda_name ?? "—")</td>
+                                        <td><strong>@(r.plate_number ?? "—")</strong></td>
+                                        <td>@(r.driver_name ?? "—")</td>
+                                        <td><span class="badge bg-primary">@r.kilogram kg</span></td>
+                                        <td><span class="badge bg-success">@tot.ToString("N2") ETB</span></td>
+                                        <td><span class="badge @statusCls">@r.status</span></td>
+                                        <td>
+                                            @if ((string)(r.status ?? "") == "Registered")
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-success me-1 mb-1"
+                                                        name="id" value="@r.id"
+                                                        onclick="return confirm('Mark as Paid?')">
+                                                    <i class="bi bi-cash"></i> Pay
+                                                </button>
+                                            }
+                                            <button type="submit" asp-page-handler="Delete"
+                                                    name="id" value="@r.id"
+                                                    class="btn btn-sm btn-danger mb-1"
+                                                    onclick="return confirm('Delete this receipt?')">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- Step tracker row -->
+                                    <tr class="table-light">
+                                        <td colspan="10" class="pt-0 pb-2 px-2">
+                                            @Html.Raw(receiptStepTracker(r.status?.ToString() ?? "Registered"))
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">No receipts found</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                </form>
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Register Receipt Modal -->
+<div class="modal fade" id="registerReceiptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-clipboard-plus me-2"></i>Register New Private Company Receipt
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" id="pcReceiptForm">
+                    <div class="row g-3">
+
+                        <!-- Private Company -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Private Company <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-lg" name="CompanyId" required>
+                                <option value="">-- Select Company --</option>
+                                @foreach (var c in Model.Companies)
+                                {
+                                    <option value="@((int)c.id)">@c.company_name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Wereda -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Wereda</label>
+                            <select class="form-select form-select-lg" name="WeredaId">
+                                <option value="0">-- Select Wereda --</option>
+                                @foreach (var w in Model.Weredas)
+                                {
+                                    <option value="@((int)w.id)">@w.name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Vehicle -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Vehicle / Plate Number</label>
+                            <select class="form-select form-select-lg" name="VehicleId">
+                                <option value="0">-- Select Vehicle --</option>
+                                @foreach (var v in Model.Vehicles)
+                                {
+                                    var vl = v.plate_number + (v.model != null ? " · " + v.model : "");
+                                    <option value="@((int)v.id)">@vl</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Driver -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Driver</label>
+                            <select class="form-select form-select-lg" name="DriverId">
+                                <option value="0">-- Select Driver --</option>
+                                @foreach (var d in Model.Drivers)
+                                {
+                                    <option value="@((int)d.id)">@d.name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Time -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control form-control-lg" name="TimeString"
+                                   value="@DateTime.Now.ToString("HH:mm")" required />
+                        </div>
+
+                        <!-- Date -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-lg" name="Date"
+                                   value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <!-- Kilogram -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Kilogram <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control" name="Kilogram"
+                                       id="pcKgInput" placeholder="0.00"
+                                       step="0.01" min="0.01" oninput="calcPcTotal()" required />
+                                <span class="input-group-text">KG</span>
+                            </div>
+                        </div>
+
+                        <!-- Price per KG -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Price per KG (ETB) <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control" name="Price"
+                                       id="pcPriceInput" value="@Model.DefaultPricePerKg"
+                                       step="0.01" min="0.01" oninput="calcPcTotal()" required />
+                                <span class="input-group-text">ETB/KG</span>
+                            </div>
+                            <div class="form-text">Default rate: @Model.DefaultPricePerKg ETB/KG</div>
+                        </div>
+
+                        <!-- Total -->
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 text-center" style="background:linear-gradient(135deg,#d1e7dd,#a3cfbb)">
+                                <div class="text-muted small mb-1">Total Amount</div>
+                                <div class="fs-3 fw-bold text-success" id="pcTotalDisplay">ETB 0.00</div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Notes</label>
+                            <textarea class="form-control" name="Notes" rows="2" placeholder="Optional notes…"></textarea>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Close
+                </button>
+                <button type="submit" form="pcReceiptForm" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Register Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .form-select:focus, .form-control:focus {
+        border-color: #008080;
+        box-shadow: 0 0 0 .25rem rgba(0,128,128,.25);
+    }
+    .btn-primary { background-color:#008080; border-color:#008080; }
+    .btn-primary:hover { background-color:#006666; border-color:#006666; }
+    td form { display:inline; }
+    /* Step tracker */
+    .rcp-flow{display:flex;align-items:flex-start;padding:6px 0;gap:0}
+    .rcp-item{display:flex;flex-direction:column;align-items:center;min-width:90px;position:relative;flex:1}
+    .rcp-item:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 15px);right:calc(-50% + 15px);height:3px;background:#dee2e6;z-index:0}
+    .rcp-item:not(:last-child).rcp-done::after{background:#198754}
+    .rcp-item:not(:last-child).rcp-active::after{background:linear-gradient(90deg,#198754 50%,#dee2e6 50%)}
+    .rcp-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;z-index:1;position:relative;border:3px solid #dee2e6;background:#fff;color:#adb5bd}
+    .rcp-done .rcp-circle{background:#198754;border-color:#198754;color:#fff}
+    .rcp-active .rcp-circle{background:#fff;border-color:#198754;color:#198754;box-shadow:0 0 0 4px rgba(25,135,84,.15)}
+    .rcp-label{font-size:10px;text-align:center;margin-top:4px;line-height:1.3;color:#6c757d;max-width:88px}
+    .rcp-done .rcp-label,.rcp-active .rcp-label{color:#198754;font-weight:600}
+    .rcp-actor{font-size:9px;text-align:center;color:#adb5bd;max-width:88px;margin-top:1px}
+</style>
+}
+
+@section Scripts {
+<script>
+function calcPcTotal() {
+    var kg    = parseFloat(document.getElementById('pcKgInput').value)    || 0;
+    var price = parseFloat(document.getElementById('pcPriceInput').value) || 0;
+    document.getElementById('pcTotalDisplay').textContent = 'ETB ' + (kg * price).toFixed(2);
+}
+</script>
+}

@@ -283,6 +283,145 @@ namespace CleaningManagmentSystem.Controllers
             var imageUrl = $"/uploads/{uniqueFileName}";
             return Ok(new { url = imageUrl });
         }
+
+        [HttpGet("notifications/{userId}")]
+        public async Task<IActionResult> GetNotifications(int userId)
+        {
+            // Returns transport notifications for the user
+            using var connection = CreateConnection();
+            try
+            {
+                var notifs = await connection.QueryAsync(
+                    @"SELECT id, transport_request_id, request_number, title, body, notification_type, is_read, created_at
+                      FROM transport_notifications WHERE recipient_user_id = @UserId
+                      ORDER BY created_at DESC LIMIT 50",
+                    new { UserId = userId });
+                return Ok(notifs);
+            }
+            catch
+            {
+                return Ok(new List<object>());
+            }
+        }
+
+        [HttpPost("notifications/{id}/read")]
+        public async Task<IActionResult> MarkNotificationRead(int id)
+        {
+            using var connection = CreateConnection();
+            try
+            {
+                await connection.ExecuteAsync(
+                    "UPDATE transport_notifications SET is_read = 1 WHERE id = @Id", new { Id = id });
+            }
+            catch { }
+            return Ok(new { success = true });
+        }
+
+        [HttpGet("reports/{userId}")]
+        public async Task<IActionResult> GetReportData(int userId, [FromQuery] string? startDate, [FromQuery] string? endDate)
+        {
+            using var connection = CreateConnection();
+            var start = startDate ?? DateTime.Now.AddMonths(-1).ToString("yyyy-MM-dd");
+            var end = endDate ?? DateTime.Now.ToString("yyyy-MM-dd");
+            var history = await connection.QueryAsync(
+                @"SELECT kilogram, price as total, receipt_date as date, status
+                  FROM staff_receipts WHERE driver_id = @UserId AND receipt_date BETWEEN @Start AND @End
+                  ORDER BY receipt_date ASC",
+                new { UserId = userId, Start = start, End = end });
+            return Ok(new { data = history, startDate = start, endDate = end });
+        }
+
+        // ── Private Company Rep: get their company info ──────────────
+        [HttpGet("private-company/{userId}")]
+        public async Task<IActionResult> GetPrivateCompanyInfo(int userId)
+        {
+            using var connection = CreateConnection();
+            var company = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                @"SELECT p.id, p.company_name, p.phone, p.address, p.services_provided
+                  FROM private_cleaning_companies p
+                  WHERE p.rep_user_id = @Uid AND COALESCE(p.is_active,1)=1",
+                new { Uid = userId });
+            if (company == null) return NotFound(new { message = "No company linked to this account." });
+            return Ok(company);
+        }
+
+        // ── Private Company Rep: submit receipt ──────────────────────
+        [HttpPost("submit-private-receipt")]
+        public async Task<IActionResult> SubmitPrivateReceipt([FromBody] PrivateReceiptSubmission req)
+        {
+            using var connection = CreateConnection();
+
+            // Resolve company info
+            var company = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT id, company_name FROM private_cleaning_companies WHERE rep_user_id = @Uid",
+                new { Uid = req.UserId });
+
+            var companyId   = company?.id   ?? 0;
+            var companyName = company?.company_name ?? req.CompanyName ?? "";
+
+            var weredaName = req.WeredaId > 0
+                ? await connection.QueryFirstOrDefaultAsync<string>(
+                    "SELECT name FROM weredas WHERE id = @Id", new { Id = req.WeredaId })
+                : null;
+
+            var vehiclePlate = req.VehicleId.HasValue
+                ? await connection.QueryFirstOrDefaultAsync<string>(
+                    "SELECT plate_number FROM vehicles WHERE id = @Id", new { Id = req.VehicleId })
+                : null;
+
+            var repName = await connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT name FROM users WHERE id = @Id", new { Id = req.UserId }) ?? "";
+
+            TimeSpan receiptTime = TimeSpan.TryParse(req.Time, out var t) ? t : TimeSpan.Zero;
+            DateTime receiptDate = DateTime.TryParse(req.Date, out var d) ? d : DateTime.Today;
+            decimal  total       = req.Kilogram * req.Price;
+
+            await connection.ExecuteAsync(
+                @"INSERT INTO private_company_receipts
+                    (company_id, company_name, wereda_id, wereda_name,
+                     vehicle_id, plate_number, driver_id, driver_name,
+                     receipt_time, receipt_date, kilogram, price, total_amount,
+                     notes, registered_by, status, registered_at)
+                  VALUES
+                    (@CompanyId, @CompanyName, @WeredaId, @WeredaName,
+                     @VehicleId, @PlateNumber, @DriverId, @DriverName,
+                     @ReceiptTime, @ReceiptDate, @Kilogram, @Price, @Total,
+                     @Notes, @RegisteredBy, 'Registered', NOW())",
+                new {
+                    CompanyId   = companyId,
+                    CompanyName = companyName,
+                    WeredaId    = req.WeredaId,
+                    WeredaName  = weredaName ?? "",
+                    VehicleId   = req.VehicleId,
+                    PlateNumber = vehiclePlate ?? "",
+                    DriverId    = req.UserId,
+                    DriverName  = repName,
+                    ReceiptTime = receiptTime,
+                    ReceiptDate = receiptDate,
+                    Kilogram    = req.Kilogram,
+                    Price       = req.Price,
+                    Total       = total,
+                    Notes       = req.Notes ?? "",
+                    RegisteredBy= repName
+                });
+
+            return Ok(new { success = true, message = "Receipt submitted successfully.", total });
+        }
+
+        // ── Private Company Rep: get their receipt history ────────────
+        [HttpGet("private-receipts/{userId}")]
+        public async Task<IActionResult> GetPrivateReceipts(int userId)
+        {
+            using var connection = CreateConnection();
+            var receipts = await connection.QueryAsync<dynamic>(
+                @"SELECT id, company_name, wereda_name, plate_number, driver_name,
+                         receipt_date, receipt_time, kilogram, price, total_amount, status, registered_at
+                  FROM private_company_receipts
+                  WHERE driver_id = @UserId
+                  ORDER BY registered_at DESC LIMIT 50",
+                new { UserId = userId });
+            return Ok(receipts);
+        }
     }
 
     public class LoginRequest
@@ -324,5 +463,19 @@ namespace CleaningManagmentSystem.Controllers
     {
         public string Status { get; set; } = string.Empty;
         public string ReceiptType { get; set; } = "Mahberat";
+    }
+
+    public class PrivateReceiptSubmission
+    {
+        public int     UserId     { get; set; }
+        public string? CompanyName{ get; set; }
+        public int     WeredaId   { get; set; }
+        public int?    VehicleId  { get; set; }
+        public decimal Kilogram   { get; set; }
+        public decimal Price      { get; set; }
+        public string  Date       { get; set; } = "";
+        public string  Time       { get; set; } = "";
+        public string? Notes      { get; set; }
+        public string? ImageUrl   { get; set; }
     }
 }

@@ -7,50 +7,56 @@ namespace CleaningManagmentSystem.Data
 {
     public static class DatabaseSeeder
     {
-        private static readonly string[] RequiredTables = new[]
-        {
-            "users",
-            "services",
-            "bookings",
-            "outsource_companies",
-            "private_cleaning_companies",
-            "receipts",
-            "payroll",
-            "capital_transactions",
-            "posts",
-            "monthly_receipts",
-            "meeting_rooms",
-            "mahberat_reports",
-            "dispatches",
-            "office_plans",
-            "library_items",
-            "agency_reports",
-            "yaka_reports",
-            "subcity_officers",
-            "subcity_drivers",
-            "wereda_officers",
-            "dispatch_schedules",
-            "outsource_receipts",
-            "office_recognitions",
-            "trainings",
-            "contact_messages",
-            "user_settings",
-            "gallery",
-            "driver_locations",
-            "delivery_tasks",
-            "contacts",
-            "messages",
-            "checklists",
-            "role_definitions",
-            "role_permissions",
-            "role_activity_logs",
-            "system_usage_analytics",
-            "weredas",
-            "mahberats",
-            "vehicles",
-            "drivers",
-            "staff_receipts"
-        };
+private static readonly string[] RequiredTables = new[]
+{
+    "users",
+    "services",
+    "bookings",
+    "outsource_companies",
+    "private_cleaning_companies",
+    "private_company_receipts",
+    "receipts",
+    "payroll",
+    "capital_transactions",
+    "posts",
+    "monthly_receipts",
+    "meeting_rooms",
+    "mahberat_reports",
+    "dispatches",
+    "office_plans",
+    "library_items",
+    "agency_reports",
+    "yaka_reports",
+    "subcity_officers",
+    "subcity_drivers",
+    "wereda_officers",
+    "dispatch_schedules",
+    "outsource_receipts",
+    "office_recognitions",
+    "trainings",
+    "contact_messages",
+    "user_settings",
+    "gallery",
+    "driver_locations",
+    "delivery_tasks",
+    "contacts",
+    "messages",
+    "checklists",
+    "role_definitions",
+    "role_permissions",
+    "role_activity_logs",
+    "system_usage_analytics",
+    "weredas",
+    "mahberats",
+    "vehicles",
+    "drivers",
+    "staff_receipts",
+    "transport_requests",
+    "transport_request_logs",
+    "transport_notifications",
+    "requests",
+    "request_approvals"
+};
 
         public static async Task SeedAsync(string connectionString)
         {
@@ -187,6 +193,139 @@ namespace CleaningManagmentSystem.Data
                                   INDEX idx_kilogram (kilogram)
                               )");
                 }
+
+                // ── Transport receipt extra fields ──
+                var hasActualKg = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'transport_requests' AND column_name = 'actual_kilogram'");
+                if (hasActualKg == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding receipt fields to transport_requests...");
+                    await connection.ExecuteAsync("ALTER TABLE transport_requests ADD COLUMN actual_kilogram DECIMAL(10,2) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE transport_requests ADD COLUMN receipt_wereda_id INT DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE transport_requests ADD COLUMN receipt_mahberat_id INT DEFAULT NULL");
+                }
+
+                // ── Mahberat Level-1 approval columns for staff_receipts ──
+                var hasMahberatApprovedStaff = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'staff_receipts' AND column_name = 'mahberat_approved'");
+                if (hasMahberatApprovedStaff == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding mahberat approval columns to staff_receipts...");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN mahberat_approved TINYINT DEFAULT NULL COMMENT '1=Approved, 0=Rejected, NULL=Pending'");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN mahberat_approved_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN mahberat_approved_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN mahberat_notes TEXT DEFAULT NULL");
+                }
+
+                // ── Mahberat Level-1 approval columns for outsource_receipts ──
+                var hasMahberatApprovedOutsource = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'outsource_receipts' AND column_name = 'mahberat_approved'");
+                if (hasMahberatApprovedOutsource == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding mahberat approval columns to outsource_receipts...");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN mahberat_approved TINYINT DEFAULT NULL COMMENT '1=Approved, 0=Rejected, NULL=Pending'");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN mahberat_approved_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN mahberat_approved_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN mahberat_notes TEXT DEFAULT NULL");
+                }
+
+                // ── Staff approval columns for staff_receipts (approved_by, approved_at, rejected_by, rejected_at, reject_notes) ──
+                var hasApprovedByStaff = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'staff_receipts' AND column_name = 'approved_by'");
+                if (hasApprovedByStaff == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding staff approval columns to staff_receipts...");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN approved_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN approved_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN rejected_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN rejected_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN reject_notes TEXT DEFAULT NULL");
+                }
+
+                // ── Staff approval columns for outsource_receipts ──
+                var hasApprovedByOutsource = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'outsource_receipts' AND column_name = 'approved_by'");
+                if (hasApprovedByOutsource == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding staff approval columns to outsource_receipts...");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN approved_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN approved_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN rejected_by VARCHAR(255) DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN rejected_at DATETIME DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE outsource_receipts ADD COLUMN reject_notes TEXT DEFAULT NULL");
+                }
+
+                // ── transport_request_id link column for staff_receipts ──
+                var hasTrIdColumn = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'staff_receipts' AND column_name = 'transport_request_id'");
+                if (hasTrIdColumn == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding transport_request_id to staff_receipts...");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD COLUMN transport_request_id INT DEFAULT NULL");
+                    await connection.ExecuteAsync("ALTER TABLE staff_receipts ADD INDEX idx_tr_id (transport_request_id)");
+                }
+
+                // ── Add is_active to private_cleaning_companies if missing ──
+                var hasPccIsActive = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='private_cleaning_companies' AND column_name='is_active'");
+                if (hasPccIsActive == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding is_active to private_cleaning_companies...");
+                    await connection.ExecuteAsync("ALTER TABLE private_cleaning_companies ADD COLUMN is_active TINYINT DEFAULT 1");
+                }
+
+                // ── Add rep_user_id to private_cleaning_companies if missing ──
+                var hasPccRepUserId = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='private_cleaning_companies' AND column_name='rep_user_id'");
+                if (hasPccRepUserId == 0)
+                {
+                    Console.WriteLine("[Seeder] Adding rep_user_id to private_cleaning_companies...");
+                    await connection.ExecuteAsync("ALTER TABLE private_cleaning_companies ADD COLUMN rep_user_id INT DEFAULT NULL");
+                }
+
+                // ── Backfill monthly_receipts from paid transport requests ──
+                try
+                {
+                    var unpopulated = await connection.QueryAsync<dynamic>(@"
+                        SELECT tr.id, tr.request_number, tr.pickup_location, tr.destination,
+                               tr.driver_name, tr.actual_kilogram, tr.transport_cost,
+                               tr.paid_at, tr.staff_action_at, tr.updated_at, tr.created_at,
+                               tr.mahberat_user_name,
+                               m.name AS mahberat_name
+                        FROM transport_requests tr
+                        LEFT JOIN mahberats m ON m.id = COALESCE(tr.receipt_mahberat_id, tr.mahberat_id)
+                        WHERE tr.status IN ('Paid','StaffApproved','ReceiptVerified')
+                          AND tr.request_number NOT IN (SELECT receipt_number FROM monthly_receipts)");
+
+                    foreach (var tr in unpopulated)
+                    {
+                        DateTime completedAt = (DateTime)(tr.paid_at ?? tr.staff_action_at ?? tr.updated_at ?? tr.created_at);
+                        decimal cost = (decimal)(tr.transport_cost ?? 0m);
+                        decimal kg   = (decimal)(tr.actual_kilogram ?? 0m);
+                        string  src  = $"Transport | {tr.pickup_location} → {tr.destination} | Mahberat: {tr.mahberat_name ?? tr.mahberat_user_name} | Driver: {tr.driver_name ?? "-"} | {kg} KG";
+
+                        await connection.ExecuteAsync(@"
+                            INSERT IGNORE INTO monthly_receipts
+                              (receipt_number, month, year, total_amount, paid_amount,
+                               balance, status, source, created_at, updated_at)
+                            VALUES (@Num, @Month, @Year, @Total, @Paid, 0, 'Billed', @Source, NOW(), NOW())",
+                            new {
+                                Num    = (string)tr.request_number,
+                                Month  = completedAt.ToString("MMMM"),
+                                Year   = completedAt.Year,
+                                Total  = cost,
+                                Paid   = cost,
+                                Source = src
+                            });
+                    }
+
+                    if (((IEnumerable<dynamic>)unpopulated).Any())
+                        Console.WriteLine($"[Seeder] Backfilled {((IEnumerable<dynamic>)unpopulated).Count()} paid transport request(s) into monthly_receipts.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Seeder] monthly_receipts backfill warning: {ex.Message}");
+                }
             }
             catch (Exception ex)
             {
@@ -269,8 +408,32 @@ namespace CleaningManagmentSystem.Data
                                 address TEXT,
                                 services_offered TEXT,
                                 contract_status VARCHAR(50),
+                                is_active TINYINT DEFAULT 1,
                                 created_at DATETIME DEFAULT NOW(),
                                 updated_at DATETIME DEFAULT NOW()
+                            )",
+                            "private_company_receipts" => @"CREATE TABLE private_company_receipts (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                company_id INT,
+                                company_name VARCHAR(255),
+                                wereda_id INT,
+                                wereda_name VARCHAR(255),
+                                vehicle_id INT,
+                                plate_number VARCHAR(50),
+                                driver_id INT,
+                                driver_name VARCHAR(255),
+                                receipt_time TIME,
+                                receipt_date DATE,
+                                kilogram DECIMAL(10,2),
+                                price DECIMAL(10,2) DEFAULT 0.00,
+                                total_amount DECIMAL(10,2) DEFAULT 0.00,
+                                notes TEXT,
+                                registered_by VARCHAR(255),
+                                status VARCHAR(50) DEFAULT 'Registered',
+                                registered_at DATETIME DEFAULT NOW(),
+                                INDEX idx_company (company_id),
+                                INDEX idx_date (receipt_date),
+                                INDEX idx_status (status)
                             )",
                             "receipts" => @"CREATE TABLE receipts (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -743,6 +906,129 @@ namespace CleaningManagmentSystem.Data
                                  INDEX idx_status (status),
                                  INDEX idx_kilogram (kilogram)
                              )",
+                            "transport_requests" => @"CREATE TABLE transport_requests (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                request_number VARCHAR(50) UNIQUE NOT NULL,
+                                mahberat_user_id INT NOT NULL,
+                                mahberat_user_name VARCHAR(255) NOT NULL,
+                                mahberat_id INT,
+                                mahberat_name VARCHAR(255),
+                                pickup_location TEXT NOT NULL,
+                                destination TEXT NOT NULL,
+                                passenger_item_details TEXT,
+                                requested_date DATE NOT NULL,
+                                requested_time VARCHAR(10),
+                                special_instructions TEXT,
+                                dispatcher_id INT,
+                                dispatcher_name VARCHAR(255),
+                                dispatcher_notes TEXT,
+                                dispatcher_action_at DATETIME,
+                                driver_id INT,
+                                driver_name VARCHAR(255),
+                                vehicle_id INT,
+                                vehicle_plate VARCHAR(50),
+                                driver_notes TEXT,
+                                driver_action_at DATETIME,
+                                pickup_confirmed_at DATETIME,
+                                pickup_notes TEXT,
+                                mahberat_pickup_approved_at DATETIME,
+                                mahberat_pickup_notes TEXT,
+                                receipt_photo_url VARCHAR(500),
+                                digital_receipt_url VARCHAR(500),
+                                receipt_notes TEXT,
+                                receipt_submitted_at DATETIME,
+                                mahberat_verified_at DATETIME,
+                                mahberat_verification_notes TEXT,
+                                staff_id INT,
+                                staff_name VARCHAR(255),
+                                transport_cost DECIMAL(10,2),
+                                staff_notes TEXT,
+                                staff_action_at DATETIME,
+                                finance_staff_id INT,
+                                finance_staff_name VARCHAR(255),
+                                transaction_number VARCHAR(100),
+                                payment_proof_url VARCHAR(500),
+                                paid_at DATETIME,
+                                payment_notes TEXT,
+                                status VARCHAR(50) NOT NULL DEFAULT 'PendingDispatcher',
+                                created_at DATETIME DEFAULT NOW(),
+                                updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+                                INDEX idx_status (status),
+                                INDEX idx_mahberat_user (mahberat_user_id),
+                                INDEX idx_driver (driver_id),
+                                INDEX idx_dispatcher (dispatcher_id),
+                                INDEX idx_created (created_at)
+                            )",
+                            "transport_request_logs" => @"CREATE TABLE transport_request_logs (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                transport_request_id INT NOT NULL,
+                                from_status VARCHAR(50),
+                                to_status VARCHAR(50) NOT NULL,
+                                actor_user_id INT NOT NULL,
+                                actor_name VARCHAR(255),
+                                actor_role VARCHAR(100),
+                                notes TEXT,
+                                created_at DATETIME DEFAULT NOW(),
+                                INDEX idx_request (transport_request_id),
+                                INDEX idx_actor (actor_user_id)
+                            )",
+                            "transport_notifications" => @"CREATE TABLE transport_notifications (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                recipient_user_id INT NOT NULL,
+                                transport_request_id INT NOT NULL,
+                                request_number VARCHAR(50),
+                                title VARCHAR(255) NOT NULL,
+                                body TEXT,
+                                notification_type VARCHAR(50) DEFAULT 'Info',
+                                is_read TINYINT DEFAULT 0,
+                                created_at DATETIME DEFAULT NOW(),
+                                INDEX idx_recipient (recipient_user_id),
+                                INDEX idx_request (transport_request_id),
+                                INDEX idx_read (is_read)
+                            )",
+                            "requests" => @"CREATE TABLE requests (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                requestor_id INT NOT NULL,
+                                requestor_role VARCHAR(50),
+                                wereda_id INT,
+                                mahberat_id INT,
+                                request_type ENUM('Waste Material Pickup', 'Written Material', 'Vehicle Request', 'Driver Assignment', 'Equipment Request', 'Training Request', 'Report Approval', 'Other') NOT NULL,
+                                description TEXT,
+                                quantity DECIMAL(10,2),
+                                urgency ENUM('Low', 'Medium', 'High', 'Critical') DEFAULT 'Medium',
+                                requested_date_time DATETIME,
+                                attachment_path VARCHAR(255),
+                                assigned_to_id INT,
+                                execution_status ENUM('Pending', 'Assigned', 'In Progress', 'Completed') DEFAULT 'Pending',
+                                completion_date DATETIME,
+                                execution_report_path VARCHAR(255),
+                                is_closed BOOLEAN DEFAULT FALSE,
+                                closed_by_id INT,
+                                closure_date DATETIME,
+                                closure_remarks TEXT,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                INDEX idx_requestor (requestor_id),
+                                INDEX idx_assigned (assigned_to_id),
+                                INDEX idx_type (request_type)
+                            )",
+                            "request_approvals" => @"CREATE TABLE request_approvals (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                request_id INT NOT NULL,
+                                level_1_status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+                                level_1_by INT,
+                                level_1_date DATETIME,
+                                level_1_comments TEXT,
+                                level_2_status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+                                level_2_by INT,
+                                level_2_date DATETIME,
+                                level_2_comments TEXT,
+                                level_3_status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+                                level_3_by INT,
+                                level_3_date DATETIME,
+                                level_3_comments TEXT,
+                                INDEX idx_request (request_id)
+                            )",
                             _ => null
                         };
 
@@ -943,7 +1229,12 @@ namespace CleaningManagmentSystem.Data
                 new { Name = "Dispatch Lead", Email = "dispatch@yeka.et", Password = "dispatch123", Role = "dispatch_officer", Phone = "+251911234573" },
                 new { Name = "Driver - Vehicle 01", Email = "driver1@yeka.et", Password = "driver123", Role = "driver", Phone = "+251911234574" },
                 new { Name = "Test Driver", Email = "driver@yeka.com", Password = "driver123", Role = "driver", Phone = "+251911234575" },
-                new { Name = "Test Outsource", Email = "outsource@yeka.com", Password = "outsource123", Role = "outsource", Phone = "+251911234576" }
+                new { Name = "Test Outsource", Email = "outsource@yeka.com", Password = "outsource123", Role = "outsource", Phone = "+251911234576" },
+                // Transport workflow users
+                new { Name = "Mahberat User - Bole", Email = "mahberat@yeka.et", Password = "mahberat123", Role = "WeredaMahberat", Phone = "+251911234577" },
+                new { Name = "Dispatcher - Transport", Email = "dispatcher@yeka.et", Password = "dispatch123", Role = "DispatchOfficer", Phone = "+251911234578" },
+                new { Name = "Driver - Transport 01", Email = "tdriver1@yeka.et", Password = "driver123", Role = "Driver", Phone = "+251911234579" },
+                new { Name = "Finance Staff", Email = "finance@yeka.et", Password = "finance123", Role = "Staff", Phone = "+251911234580" }
             };
 
             foreach (var user in sampleUsers)
@@ -1053,6 +1344,34 @@ namespace CleaningManagmentSystem.Data
                         (title, trainer, description, start_date, end_date, location, participants, status, materials, assigned_to_user_id, category, created_at)
                         VALUES (@Title, @Trainer, @Description, @StartDate, @EndDate, @Location, @Participants, @Status, @Materials, @AssignedToUserId, @Category, NOW())",
                         tr);
+                }
+            }
+
+            // Seed sample requests for WMRAS
+            var sampleRequests = new[]
+            {
+                new { RequestorId = 11, RequestorRole = "WeredaMahberat", RequestType = "Waste Material Pickup", Description = "Need pickup at Bole area", Quantity = 50.5m, Urgency = "High" },
+                new { RequestorId = 11, RequestorRole = "WeredaMahberat", RequestType = "Written Material", Description = "Derite forms supply needed", Quantity = 100m, Urgency = "Medium" },
+                new { RequestorId = 4, RequestorRole = "cleaner", RequestType = "Equipment Request", Description = "Need new brooms and mops", Quantity = 5m, Urgency = "Low" }
+            };
+
+            foreach (var req in sampleRequests)
+            {
+                var existingReq = await connection.QueryFirstOrDefaultAsync<int?>(
+                    "SELECT id FROM requests WHERE description = @Description",
+                    new { req.Description });
+
+                if (existingReq == null)
+                {
+                    Console.WriteLine($"[Seeder] Creating sample request: {req.RequestType}");
+                    var reqId = await connection.ExecuteScalarAsync<int>(@"
+                        INSERT INTO requests (requestor_id, requestor_role, request_type, description, quantity, urgency, execution_status, is_closed, created_at)
+                        VALUES (@RequestorId, @RequestorRole, @RequestType, @Description, @Quantity, @Urgency, 'Pending', FALSE, NOW());
+                        SELECT LAST_INSERT_ID();", req);
+
+                    await connection.ExecuteAsync(@"
+                        INSERT INTO request_approvals (request_id, level_1_status, level_2_status, level_3_status)
+                        VALUES (@RequestId, 'Pending', 'Pending', 'Pending')", new { RequestId = reqId });
                 }
             }
         }

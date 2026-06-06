@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\2M\\Documents\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj": {}
+    "C:\\Users\\mezig\\Music\\eccc\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj": {}
   },
   "projects": {
-    "C:\\Users\\2M\\Documents\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj": {
+    "C:\\Users\\mezig\\Music\\eccc\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\2M\\Documents\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj",
+        "projectUniqueName": "C:\\Users\\mezig\\Music\\eccc\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj",
         "projectName": "RunDbMigration",
-        "projectPath": "C:\\Users\\2M\\Documents\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj",
-        "packagesPath": "C:\\Users\\2M\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\2M\\Documents\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\obj\\",
+        "projectPath": "C:\\Users\\mezig\\Music\\eccc\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\RunDbMigration.csproj",
+        "packagesPath": "C:\\Users\\mezig\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\mezig\\Music\\eccc\\CleaningManagmentSystem\\CleaningManagmentSystem\\Scripts\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\2M\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\mezig\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -24,7 +24,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -39,11 +38,10 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "MySqlConnector": {
@@ -67,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

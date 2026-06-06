@@ -1,4 +1,5 @@
 @page
+@model CleaningManagmentSystem.Pages.Dashboard.Staff.YakaReportModel
 @{
     var userName = HttpContext.Session.GetString("UserName");
     var userRole = HttpContext.Session.GetString("UserRole");
@@ -231,42 +232,7 @@
     let currentZoom = 1.0;
     let selectedReportType = 'category';
 
-    // Yaka Database Sample Records
-    const yakaData = [
-        {
-            category: "PERFORMANCE AUDITS",
-            subcategory: "Yeka Hub Quality Inspections",
-            code: "YK-2026-001",
-            name: "Bole branch inspection (Lead: Inspector Mike)",
-            qty: 1,
-            rate: 94.00,
-            catKey: "Performance",
-            status: "Approved",
-            date: "@DateTime.Now.ToString("yyyy-MM-dd")"
-        },
-        {
-            category: "OPERATIONAL AUDITS",
-            subcategory: "Equipment Audit Teams",
-            code: "YK-2026-003",
-            name: "Arada Hub equipment status review (Lead: Inspector John)",
-            qty: 1,
-            rate: 78.00,
-            catKey: "Operations",
-            status: "Pending",
-            date: "@DateTime.Now.ToString("yyyy-MM-dd")"
-        },
-        {
-            category: "HR & ATTENDANCE AUDITS",
-            subcategory: "Attendance Audit Teams",
-            code: "YK-2026-005",
-            name: "Yeka attendance validation (Lead: Inspector Sarah)",
-            qty: 1,
-            rate: 90.00,
-            catKey: "HR",
-            status: "Approved",
-            date: "@DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")"
-        }
-    ];
+    const yakaData = @Html.Raw(Model.ReportDataJson);
 
     function toggleCustomDateRange(selectElement) {
         const container = selectElement.closest('form').querySelector('.custom-date-range-container');

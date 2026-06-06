@@ -159,6 +159,30 @@ namespace CleaningManagmentSystem.Pages.Dashboard.WeredaMahberat
             return RedirectToPage();
         }
 
+        public IActionResult OnPostApproveLevel1(int id)
+        {
+            var userName = HttpContext.Session.GetString("UserName");
+            if (string.IsNullOrEmpty(userName)) return RedirectToPage("/Login");
+
+            try
+            {
+                using var connection = new MySqlConnection(_connectionString);
+                var affectedRows = connection.Execute(
+                    "UPDATE monthly_receipts SET status = 'Level 1 Approved', updated_at = NOW() WHERE id = @Id AND status = 'Pending'",
+                    new { Id = id });
+
+                if (affectedRows > 0) TempData["SuccessMessage"] = "First approval (Level 1) completed successfully. Forwarded to Manager.";
+                else TempData["ErrorMessage"] = "Receipt not found or already approved.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MonthlyReceipt] Approve error: {ex.Message}");
+                TempData["ErrorMessage"] = "Error approving receipt";
+            }
+
+            return RedirectToPage();
+        }
+
         public IActionResult OnPostDeleteReceipt(int id)
         {
             var userName = HttpContext.Session.GetString("UserName");
@@ -199,6 +223,7 @@ namespace CleaningManagmentSystem.Pages.Dashboard.WeredaMahberat
             {
                 using var connection = new MySqlConnection(_connectionString);
 
+                // Load both manual monthly_receipts AND completed transport requests
                 string sql = "SELECT * FROM monthly_receipts WHERE 1=1";
                 var parameters = new DynamicParameters();
 
@@ -207,31 +232,70 @@ namespace CleaningManagmentSystem.Pages.Dashboard.WeredaMahberat
                     sql += " AND month = @Month";
                     parameters.Add("Month", FilterMonth);
                 }
-
                 if (FilterYear.HasValue && FilterYear > 0)
                 {
                     sql += " AND year = @Year";
                     parameters.Add("Year", FilterYear.Value);
                 }
-
                 if (!string.IsNullOrEmpty(SearchTerm))
                 {
                     sql += " AND (receipt_number LIKE @Search OR source LIKE @Search)";
                     parameters.Add("Search", $"%{SearchTerm}%");
                 }
-
                 sql += " ORDER BY year DESC, month DESC, created_at DESC";
+                var manualReceipts = connection.Query<MonthlyReceipt>(sql, parameters).ToList();
 
-                var allReceipts = connection.Query<MonthlyReceipt>(sql, parameters).ToList();
+                // Load paid transport requests and merge as MonthlyReceipt objects
+                try
+                {
+                    var userId = HttpContext.Session.GetInt32("UserId");
+                    string trSql = @"
+                        SELECT id, request_number, mahberat_user_id, mahberat_user_name,
+                               pickup_location, destination, driver_name, vehicle_plate,
+                               actual_kilogram, transport_cost, status,
+                               paid_at, staff_action_at, updated_at, created_at
+                        FROM transport_requests
+                        WHERE status IN ('Paid','StaffApproved','ReceiptVerified')";
+                    var trParams = new DynamicParameters();
+                    if (userId.HasValue)
+                    {
+                        trSql += " AND mahberat_user_id = @UserId";
+                        trParams.Add("UserId", userId.Value);
+                    }
+                    trSql += " ORDER BY COALESCE(paid_at, staff_action_at, updated_at, created_at) DESC";
 
-                if (!string.IsNullOrEmpty(SearchTerm) && (string.IsNullOrEmpty(FilterMonth) && !FilterYear.HasValue))
-                {
-                    Receipts = allReceipts;
+                    var transportRows = connection.Query<dynamic>(trSql, trParams).ToList();
+                    foreach (var tr in transportRows)
+                    {
+                        // Use best available date: paid_at > staff_action_at > updated_at > created_at
+                        DateTime? completedAt = tr.paid_at ?? tr.staff_action_at ?? tr.updated_at ?? tr.created_at;
+                        string statusLabel = (string)tr.status switch {
+                            "Paid"           => "Paid",
+                            "StaffApproved"  => "Approved",
+                            "ReceiptVerified"=> "Verified",
+                            _                => (string)tr.status
+                        };
+                        decimal cost = (decimal)(tr.transport_cost ?? 0m);
+                        manualReceipts.Add(new MonthlyReceipt
+                        {
+                            Id            = (int)tr.id,
+                            ReceiptNumber = (string)tr.request_number,
+                            Month         = completedAt?.ToString("MMMM") ?? DateTime.Now.ToString("MMMM"),
+                            Year          = completedAt?.Year ?? DateTime.Now.Year,
+                            TotalAmount   = cost,
+                            PaidAmount    = statusLabel == "Paid" ? cost : 0m,
+                            Balance       = statusLabel == "Paid" ? 0m : cost,
+                            Status        = statusLabel,
+                            Source        = $"Transport | {tr.pickup_location} → {tr.destination} | Driver: {tr.driver_name ?? "-"} | {(tr.actual_kilogram != null ? tr.actual_kilogram + " KG" : "—")}"
+                        });
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Receipts = allReceipts;
+                    Console.WriteLine($"[MonthlyReceipt] Transport rows load error: {ex.Message}");
                 }
+
+                Receipts = manualReceipts.OrderByDescending(r => r.Year).ThenByDescending(r => r.Month);
             }
             catch (Exception ex)
             {

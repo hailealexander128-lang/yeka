@@ -76,6 +76,13 @@
                     <span class="badge bg-light text-dark rounded-pill badge-count ms-1">@Model.HistorySubmissions.Count</span>
                 </button>
             </li>
+            <li class="nav-item">
+                <button class="btn tab-pill @(activeTab == "monthly" ? "active btn-info text-white" : "btn-outline-info")"
+                        onclick="switchTab('monthly')" id="tab-monthly">
+                    <i class="bi bi-receipt me-1"></i> Monthly Receipts
+                    <span class="badge bg-dark rounded-pill badge-count ms-1">@Model.MonthlyReceipts.Count(r => r.status == "Level 1 Approved")</span>
+                </button>
+            </li>
         </ul>
 
         <!-- ══════════════════ PENDING TAB ══════════════════ -->
@@ -306,6 +313,67 @@
             }
         </div>
 
+        <!-- ══════════════════ MONTHLY TAB ══════════════════ -->
+        <div id="pane-monthly" style="display: @(activeTab == "monthly" ? "block" : "none")">
+            @if (Model.MonthlyReceipts.Count == 0)
+            {
+                <div class="alert alert-info text-center py-5 shadow-sm rounded-4">
+                    <i class="bi bi-receipt display-4 text-secondary mb-3 d-block"></i>
+                    <h4>No Monthly Receipts</h4>
+                    <p class="mb-0">There are no monthly receipts waiting for manager approval.</p>
+                </div>
+            }
+            else
+            {
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No</th>
+                                        <th>Month &amp; Year</th>
+                                        <th>Amount</th>
+                                        <th>Source</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.MonthlyReceipts)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@item.receiptNumber</td>
+                                            <td>@item.month @item.year</td>
+                                            <td><span class="badge bg-success">@item.totalAmount ETB</span></td>
+                                            <td><span class="badge bg-secondary">@item.source</span></td>
+                                            <td>
+                                                @if(item.status == "Paid") { <span class="badge bg-success">Paid (Fully Approved)</span> }
+                                                else { <span class="badge bg-info text-dark">Level 1 Approved</span> }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="openMonthlyApprovalForm(@item.id, '@item.receiptNumber', '@item.month @item.year', @item.totalAmount, '@item.status')">
+                                                    <i class="bi bi-file-earmark-text me-1"></i> Form
+                                                </button>
+                                                @if(item.status == "Level 1 Approved") {
+                                                    <form method="post" asp-page-handler="ApproveMonthly" class="d-inline">
+                                                        <input type="hidden" name="id" value="@item.id" />
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-check me-1"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
     </main>
 
     <!-- ══ Approve Modal ══ -->
@@ -375,6 +443,55 @@
         </div>
     </div>
 
+    <!-- RECEIPT APPROVAL FORM MODAL (Level 2 = Manager) -->
+    <div class="modal fade" id="monthlyApprovalFormModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title w-100 text-center text-uppercase fw-bold">
+                        <i class="bi bi-file-earmark-check me-2"></i>Receipt Approval Form
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light p-4">
+                    <div class="border border-2 border-dark bg-white p-4" style="font-size:.9rem">
+                        <div class="text-center fw-bold fs-5 border-bottom border-dark pb-2 mb-3">RECEIPT APPROVAL FORM</div>
+                        
+                        <div class="fw-bold bg-dark text-white px-2 py-1 mb-2">SECTION A: RECEIPT INFORMATION</div>
+                        <div class="row mb-3 px-2">
+                            <div class="col-md-6"><strong>Receipt No:</strong> <span id="mFormRecNo"></span></div>
+                            <div class="col-md-6"><strong>Month/Year:</strong> <span id="mFormPeriod"></span></div>
+                            <div class="col-md-6 mt-1"><strong>Total Amount:</strong> <span id="mFormAmount"></span></div>
+                            <div class="col-md-6 mt-1"><strong>Status:</strong> <span id="mFormStatus"></span></div>
+                        </div>
+
+                        <div class="fw-bold bg-dark text-white px-2 py-1 mb-2">SECTION B: APPROVAL TRACKING</div>
+                        <table class="table table-sm table-bordered border-dark mb-3">
+                            <thead class="table-secondary"><tr><th>Level</th><th>Role</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td><td>Mahberat</td>
+                                    <td><span class="text-success fw-bold">[✓] Approved</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2</td><td>Manager (You)</td>
+                                    <td id="mFormL2Status">[ ] Pending</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white d-flex justify-content-between align-items-center">
+                    <div id="mApprovalFormActions"></div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Image Modal -->
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -405,12 +522,37 @@
         function switchTab(tab) {
             document.getElementById('pane-pending').style.display = tab === 'pending' ? 'block' : 'none';
             document.getElementById('pane-history').style.display = tab === 'history' ? 'block' : 'none';
+            document.getElementById('pane-monthly').style.display = tab === 'monthly' ? 'block' : 'none';
+            
             document.getElementById('tab-pending').className = tab === 'pending'
                 ? 'btn tab-pill active btn-primary'
                 : 'btn tab-pill btn-outline-primary';
             document.getElementById('tab-history').className = tab === 'history'
                 ? 'btn tab-pill active btn-secondary'
                 : 'btn tab-pill btn-outline-secondary';
+            document.getElementById('tab-monthly').className = tab === 'monthly'
+                ? 'btn tab-pill active btn-info text-white'
+                : 'btn tab-pill btn-outline-info';
+        }
+
+        function openMonthlyApprovalForm(id, no, period, amount, status) {
+            document.getElementById('mFormRecNo').textContent = no;
+            document.getElementById('mFormPeriod').textContent = period;
+            document.getElementById('mFormAmount').textContent = 'ETB ' + parseFloat(amount).toFixed(2);
+            document.getElementById('mFormStatus').textContent = status;
+            
+            let l2 = status === 'Paid' ? '<span class="text-success fw-bold">[✓] Approved</span>' : '<span class="text-warning">[ ] Pending</span>';
+            document.getElementById('mFormL2Status').innerHTML = l2;
+            
+            let actions = '';
+            if(status === 'Level 1 Approved') {
+                actions = `<form method="post" asp-page-handler="ApproveMonthly" class="m-0"><input type="hidden" name="id" value="${id}" /><button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Approve (Level 2)</button></form>`;
+            } else {
+                actions = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Fully Approved</span>`;
+            }
+            document.getElementById('mApprovalFormActions').innerHTML = actions;
+            
+            new bootstrap.Modal(document.getElementById('monthlyApprovalFormModal')).show();
         }
 
         function openApproveModal(id, type, kg, wereda, driver) {
@@ -463,6 +605,7 @@
         // Auto-switch to history tab if requested
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('tab') === 'history') switchTab('history');
+        if (urlParams.get('tab') === 'monthly') switchTab('monthly');
     </script>
 </body>
 </html>

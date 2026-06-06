@@ -9,7 +9,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Yeka Cleaning Services</title>
+    <title data-i18n-title="home_page_title">@ViewData["Title"] - Yeka Cleaning Services</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -127,19 +127,22 @@
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" asp-area="" asp-page="/Index"><i class="bi bi-droplet-fill"></i> Yeka Cleaning</a>
+            <a class="navbar-brand" asp-area="" asp-page="/Index" data-i18n="nav_brand"><i class="bi bi-droplet-fill"></i> Yeka Cleaning</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="navbar-collapse collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Index"><i class="bi bi-house-door"></i> Home</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Gallery"><i class="bi bi-images"></i> Gallery</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Services"><i class="bi bi-briefcase"></i> Services</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/About"><i class="bi bi-people"></i> About Us</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Contact"><i class="bi bi-envelope"></i> Contact Us</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Blog"><i class="bi bi-journal-text"></i> Blog</a></li>
-                    <li class="nav-item ms-lg-3"><a class="login-btn" asp-area="" asp-page="/Login">Login</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Index" data-i18n="nav_home"><i class="bi bi-house-door"></i> Home</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Gallery" data-i18n="nav_gallery"><i class="bi bi-images"></i> Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Services" data-i18n="nav_services"><i class="bi bi-briefcase"></i> Services</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/About" data-i18n="nav_about"><i class="bi bi-people"></i> About Us</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Contact" data-i18n="nav_contact"><i class="bi bi-envelope"></i> Contact Us</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-area="" asp-page="/Blog" data-i18n="nav_blog"><i class="bi bi-journal-text"></i> Blog</a></li>
+                    <li class="nav-item ms-lg-3"><a class="login-btn" asp-area="" asp-page="/Login" data-i18n="nav_login">Login</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <select id="languageSelect" class="form-select form-select-sm border-light text-dark"></select>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -150,9 +153,9 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-7 hero-content">
-                <h1>Professional Cleaning Services for Your Home & Office</h1>
-                <p>Experience the difference with our expert cleaning team. We bring cleanliness to perfection.</p>
-                <a href="#services" class="hero-btn">Explore Our Services</a>
+                <h1 data-i18n="hero_title">Professional Cleaning Services for Your Home & Office</h1>
+                <p data-i18n="hero_subtitle">Experience the difference with our expert cleaning team. We bring cleanliness to perfection.</p>
+                <a href="#services" class="hero-btn" data-i18n="hero_button">Explore Our Services</a>
             </div>
         </div>
     </div>
@@ -160,27 +163,27 @@
 
 <section class="features-section">
     <div class="container">
-        <h2 class="text-center mb-5">Why Choose Us</h2>
+        <h2 class="text-center mb-5" data-i18n="features_title">Why Choose Us</h2>
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-icon"><i class="bi bi-award"></i></div>
-                    <h4>Expert Team</h4>
-                    <p>Our certified cleaning professionals deliver exceptional results.</p>
+                    <h4 data-i18n="feature_expert_title">Expert Team</h4>
+                    <p data-i18n="feature_expert_text">Our certified cleaning professionals deliver exceptional results.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
-                    <h4>Trusted & Secure</h4>
-                    <p>Fully vetted staff. Your property is in safe hands.</p>
+                    <h4 data-i18n="feature_trusted_title">Trusted & Secure</h4>
+                    <p data-i18n="feature_trusted_text">Fully vetted staff. Your property is in safe hands.</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="feature-card">
                     <div class="feature-icon"><i class="bi bi-clock-history"></i></div>
-                    <h4>Flexible Schedule</h4>
-                    <p>We work around your schedule. Same-day service!</p>
+                    <h4 data-i18n="feature_flexible_title">Flexible Schedule</h4>
+                    <p data-i18n="feature_flexible_text">We work around your schedule. Same-day service!</p>
                 </div>
             </div>
         </div>
@@ -200,26 +203,26 @@
                 <div class="service-item"><h5><i class="bi bi-stars"></i> Special Services</h5><p>Carpet, window, upholstery</p></div>
             </div>
         </div>
-        <div class="text-center mt-4"><a asp-page="/Services" class="hero-btn">View All Services</a></div>
+        <div class="text-center mt-4"><a asp-page="/Services" class="hero-btn" data-i18n="services_view_all">View All Services</a></div>
     </div>
 </section>
 
 <footer>
     <div class="container">
         <div class="row">
-            <div class="col-md-4 mb-4"><h5><i class="bi bi-droplet-fill"></i> Yeka Cleaning</h5><p>Your trusted partner for professional cleaning services.</p></div>
+            <div class="col-md-4 mb-4"><h5><i class="bi bi-droplet-fill"></i> <span data-i18n="footer_brand">Yeka Cleaning</span></h5><p data-i18n="footer_desc">Your trusted partner for professional cleaning services.</p></div>
             <div class="col-md-4 mb-4">
-                <h5>Quick Links</h5>
+                <h5 data-i18n="footer_quicklinks">Quick Links</h5>
                 <ul class="list-unstyled">
-                    <li><a asp-page="/Services">Services</a></li>
-                    <li><a asp-page="/About">About Us</a></li>
-                    <li><a asp-page="/Contact">Contact</a></li>
-                    <li><a asp-page="/Blog">Blog</a></li>
+                    <li><a asp-page="/Services" data-i18n="footer_link_services">Services</a></li>
+                    <li><a asp-page="/About" data-i18n="footer_link_about">About Us</a></li>
+                    <li><a asp-page="/Contact" data-i18n="footer_link_contact">Contact</a></li>
+                    <li><a asp-page="/Blog" data-i18n="footer_link_blog">Blog</a></li>
                 </ul>
             </div>
-            <div class="col-md-4 mb-4"><h5>Contact Us</h5><p><i class="bi bi-telephone"></i> (555) 123-4567</p><p><i class="bi bi-envelope"></i> info@yeka-cleaning.com</p></div>
+            <div class="col-md-4 mb-4"><h5 data-i18n="footer_contact_title">Contact Us</h5><p><i class="bi bi-telephone"></i> <span data-i18n="footer_phone">(555) 123-4567</span></p><p><i class="bi bi-envelope"></i> <span data-i18n="footer_email">info@yeka-cleaning.com</span></p></div>
         </div>
-        <div class="text-center border-top pt-3"><p class="mb-0">&copy; 2026 Yeka Cleaning Services. All rights reserved.</p></div>
+        <div class="text-center border-top pt-3"><p class="mb-0" data-i18n="footer_copyright">&copy; 2026 Yeka Cleaning Services. All rights reserved.</p></div>
     </div>
 </footer>
 
@@ -227,7 +230,7 @@
 
 <div class="chat-window" id="chatWindow">
     <div class="chat-header">
-        <div>
+        <div data-i18n="chat_title">
             <i class="bi bi-robot"></i> Yeka Cleaning Support
         </div>
         <button style="background:none;border:none;color:white;cursor:pointer;font-size:20px" onclick="toggleChat()">
@@ -236,42 +239,56 @@
     </div>
     <div class="chat-messages" id="chatMessages">
         <div class="message bot-message">
-            Hello! Welcome to Yeka Cleaning! How can I help you today?
+            <span id="chatWelcome" data-i18n="chat_welcome">Hello! Welcome to Yeka Cleaning! How can I help you today?</span>
             <div class="quick-replies">
-                <span class="quick-reply" onclick="sendQuickMessage('pricing', 'Pricing')">Pricing</span>
-                <span class="quick-reply" onclick="sendQuickMessage('services', 'Services')">Services</span>
-                <span class="quick-reply" onclick="sendQuickMessage('booking', 'Book Now')">Book Now</span>
-                <span class="quick-reply" onclick="sendQuickMessage('contact', 'Contact')">Contact</span>
+                <span class="quick-reply" data-reply-key="pricing" data-i18n="chat_pricing" onclick="sendQuickMessage('pricing')">Pricing</span>
+                <span class="quick-reply" data-reply-key="services" data-i18n="chat_services" onclick="sendQuickMessage('services')">Services</span>
+                <span class="quick-reply" data-reply-key="booking" data-i18n="chat_book_now" onclick="sendQuickMessage('booking')">Book Now</span>
+                <span class="quick-reply" data-reply-key="contact" data-i18n="chat_contact" onclick="sendQuickMessage('contact')">Contact</span>
             </div>
         </div>
     </div>
     <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        <input type="text" id="chatInput" placeholder="Type your message..." data-i18n-placeholder="chat_placeholder" onkeypress="handleKeyPress(event)">
         <button onclick="sendMessage()"><i class="bi bi-send"></i></button>
     </div>
 </div>
 
 <script>
-    const faq = {
-        'pricing': 'Our pricing depends on the service type and area size. Residential cleaning starts from $50, Deep cleaning from $150. Contact us for a free quote!',
-        'services': 'We offer: Residential Cleaning, Commercial Cleaning, Deep Cleaning, Carpet & Upholstery Cleaning, Window Cleaning, and Post-Construction Cleanup.',
-        'booking': 'To book our services, please call us or fill out the contact form. We offer same-day service!',
-        'contact': 'You can reach us at:\nPhone: 0931503513\nEmail: wedajebimrew@gmail.com',
-        'hello': 'Hello! How can I help you today?',
-        'hi': 'Hi there! What can I help you with?',
-        'price': 'Our pricing depends on the service type and area size. Residential cleaning starts from $50, Deep cleaning from $150.',
-        'cost': 'Our pricing depends on the service type and area size. Residential cleaning starts from $50, Deep cleaning from $150.',
-        'service': 'We offer: Residential Cleaning, Commercial Cleaning, Deep Cleaning, Carpet & Upholstery Cleaning, Window Cleaning, and Post-Construction Cleanup.',
-        'cleaning': 'We offer professional cleaning services for homes and offices. Check our Services page for more details!',
-        'book': 'To book our services, please call us at 0931503513 or email wedajebimrew@gmail.com',
-        'time': 'We work Mon-Fri: 8AM-6PM, Saturday: 9AM-4PM.',
-        'hours': 'We work Mon-Fri: 8AM-6PM, Saturday: 9AM-4PM.',
-        'location': 'We are located at 123 Clean Street, Suite 100. Contact us for service anywhere in the city.',
-        'address': 'Our address is 123 Clean Street, Suite 100. Contact us for service anywhere in the city.',
-        'about': 'Yeka Cleaning was founded in 2015. We provide professional cleaning services with certified experts.',
-        'company': 'Yeka Cleaning was founded in 2015. We provide professional cleaning services with certified experts.',
-        'default': 'I understand you need help. For immediate assistance, please contact us:\n\n<i class="bi bi-telephone"></i> Phone: 0931503513\n<i class="bi bi-envelope"></i> Email: wedajebimrew@gmail.com\n\nOr fill out our Contact form and we\'ll get back to you soon!'
+    const chatResponseKeys = {
+        pricing: 'faq_pricing',
+        services: 'faq_services',
+        booking: 'faq_booking',
+        contact: 'faq_contact',
+        hello: 'faq_hello',
+        hi: 'faq_hi',
+        price: 'faq_price',
+        cost: 'faq_cost',
+        service: 'faq_service',
+        cleaning: 'faq_cleaning',
+        book: 'faq_book',
+        time: 'faq_time',
+        hours: 'faq_hours',
+        location: 'faq_location',
+        address: 'faq_address',
+        about: 'faq_about',
+        company: 'faq_company',
+        default: 'faq_default'
     };
+
+    const faq = {};
+
+    function refreshFaqResponses() {
+        const translation = window.YekaTranslation;
+        if (!translation) {
+            return;
+        }
+
+        Object.keys(chatResponseKeys).forEach(key => {
+            const translationKey = chatResponseKeys[key];
+            faq[key] = translation.get(translationKey) || '';
+        });
+    }
 
     function toggleChat() {
         const chatWindow = document.getElementById('chatWindow');
@@ -284,9 +301,10 @@
         }
     }
 
-    function sendQuickMessage(key, text) {
-        addUserMessage(text);
-        setTimeout(() => addBotMessage(faq[key]), 500);
+    function sendQuickMessage(key) {
+        const label = window.YekaTranslation?.get('chat_' + key) || key;
+        addUserMessage(label);
+        setTimeout(() => addBotMessage(faq[key] || faq.default), 500);
     }
 
     function sendMessage() {
@@ -320,15 +338,45 @@
 
     function getBotResponse(message) {
         for (let key in faq) {
-            if (message.includes(key)) {
+            if (message.includes(key) && faq[key]) {
                 return faq[key];
             }
         }
-        return faq['default'];
+        return faq.default || 'I understand you need help. For immediate assistance, please contact us.';
+    }
+
+    function refreshChatLabels() {
+        const welcomeEl = document.getElementById('chatWelcome');
+        if (welcomeEl) {
+            welcomeEl.textContent = window.YekaTranslation?.get('chat_welcome') || welcomeEl.textContent;
+        }
+        document.querySelectorAll('.quick-reply').forEach(btn => {
+            const labelKey = btn.dataset.i18n;
+            if (labelKey) {
+                btn.textContent = window.YekaTranslation?.get(labelKey) || btn.textContent;
+            }
+        });
+        const input = document.getElementById('chatInput');
+        if (input) {
+            input.placeholder = window.YekaTranslation?.get('chat_placeholder') || input.placeholder;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshFaqResponses();
+        refreshChatLabels();
+    });
+
+    if (window.YekaTranslation) {
+        window.YekaTranslation.onLanguageChanged = () => {
+            refreshFaqResponses();
+            refreshChatLabels();
+        };
     }
 </script>
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/translation.js"></script>
 </body>
 </html>

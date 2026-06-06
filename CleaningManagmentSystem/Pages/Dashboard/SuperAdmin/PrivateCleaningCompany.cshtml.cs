@@ -105,6 +105,10 @@ namespace CleaningManagmentSystem.Pages.Dashboard.SuperAdmin
                     ToggleStatus(connection);
                     SuccessMessage = "Status updated!";
                 }
+                else if (action == "create_user")
+                {
+                    CreateUserAccount(connection);
+                }
             }
             catch (Exception ex)
             {
@@ -205,6 +209,47 @@ namespace CleaningManagmentSystem.Pages.Dashboard.SuperAdmin
             string query = "UPDATE private_cleaning_companies SET status = @Status, updated_at = NOW() WHERE id = @Id";
             connection.Execute(query, new { Status = newStatus, Id });
             Console.WriteLine($"[PrivateCleaningCompany] Toggled status for ID: {Id}");
+        }
+
+        private void CreateUserAccount(MySqlConnection connection)
+        {
+            // Get the company info
+            var company = connection.QueryFirstOrDefault<PrivateCompany>(
+                "SELECT * FROM private_cleaning_companies WHERE id = @Id", new { Id });
+            if (company == null) { ErrorMessage = "Company not found."; return; }
+
+            string userEmail    = Request.Form["user_email"].ToString().Trim();
+            string userPassword = Request.Form["user_password"].ToString().Trim();
+            string userName2    = Request.Form["user_name"].ToString().Trim();
+
+            if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(userPassword))
+            { ErrorMessage = "Email and password are required."; return; }
+
+            // Check email unique
+            var existing = connection.QueryFirstOrDefault<int>(
+                "SELECT COUNT(*) FROM users WHERE email = @Email", new { Email = userEmail });
+            if (existing > 0) { ErrorMessage = $"Email {userEmail} already exists."; return; }
+
+            connection.Execute(
+                @"INSERT INTO users (name, email, password, role, phone, is_active, created_at, updated_at)
+                  VALUES (@Name, @Email, @Password, 'PrivateCompanyRep', @Phone, 1, NOW(), NOW())",
+                new {
+                    Name     = string.IsNullOrEmpty(userName2) ? company.CompanyName + " Rep" : userName2,
+                    Email    = userEmail,
+                    Password = userPassword,
+                    Phone    = company.Phone ?? ""
+                });
+
+            // Link user to company via company_user_id in private_cleaning_companies
+            var newUserId = connection.QueryFirstOrDefault<int>("SELECT LAST_INSERT_ID()");
+            try {
+                connection.Execute(
+                    "UPDATE private_cleaning_companies SET rep_user_id = @Uid WHERE id = @Id",
+                    new { Uid = newUserId, Id });
+            } catch { /* column may not exist yet — ignore */ }
+
+            SuccessMessage = $"User account created: {userEmail} with role PrivateCompanyRep";
+            Console.WriteLine($"[PrivateCleaningCompany] Created user account for company ID {Id}: {userEmail}");
         }
     }
 

@@ -66,3 +66,9 @@ CREATE TABLE IF NOT EXISTS bookings (
 -- 8. Set default notification preferences for existing users where NULL
 UPDATE users SET email_notifications = TRUE WHERE email_notifications IS NULL;
 UPDATE users SET sms_notifications = TRUE WHERE sms_notifications IS NULL;
+
+-- Add transport_request_id to staff_receipts (links transport receipt to approval queue)
+ALTER TABLE staff_receipts
+  ADD COLUMN IF NOT EXISTS transport_request_id INT NULL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS image_url VARCHAR(1000) NULL DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS notes TEXT NULL DEFAULT NULL;

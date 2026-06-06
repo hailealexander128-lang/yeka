@@ -11,10 +11,16 @@
     }
 }
 <!-- Staff Dashboard Sidebar Content -->
+<button class="sidebar-toggle-btn d-none d-md-flex" id="sidebarToggleBtn" onclick="toggleSidebarCollapse()" title="Expand / Collapse">
+    <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
+</button>
 <div class="sidebar-scroll pt-3" style="height: 100%;">
-    <div class="pb-3 mb-3 border-bottom text-center">
-        <h5 class="text-white fw-bold"><i class="bi bi-droplet-fill text-info me-1"></i>Yeka Cleaning</h5>
-        <small class="text-white-50">Staff Dashboard</small>
+    <div class="sidebar-logo-area pb-3 mb-3 border-bottom d-flex align-items-center gap-2 px-3" style="min-height:54px">
+        <i class="bi bi-droplet-fill text-info fs-5 flex-shrink-0"></i>
+        <div class="sidebar-brand-text">
+            <div class="text-white fw-bold" style="font-size:.95rem;line-height:1.2">Yeka Cleaning</div>
+            <div class="text-white-50" style="font-size:.68rem">Staff Dashboard</div>
+        </div>
     </div>
 
     <nav class="sidebar-nav mt-3">
@@ -32,7 +38,9 @@
 
             <!-- Receipts Section -->
             @{
-                bool isReceiptsActive = IsActive("/Dashboard/Staff/RegisterReceipt") || IsActive("/Dashboard/Staff/OutsourceReceipt");
+                bool isReceiptsActive = IsActive("/Dashboard/Staff/RegisterReceipt")
+                                     || IsActive("/Dashboard/Staff/OutsourceReceipt")
+                                     || IsActive("/Dashboard/Staff/PrivateCompanyReceipt");
             }
             <li class="nav-item">
                 <a class="nav-link @(isReceiptsActive ? "active" : "")" data-bs-toggle="collapse" href="#receiptsCollapse" role="button" aria-expanded="@(isReceiptsActive ? "true" : "false")" aria-controls="receiptsCollapse">
@@ -50,6 +58,11 @@
                                 <i class="bi bi-circle me-2" style="font-size: 0.5rem;"></i> Outsource Receipt
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="/Dashboard/Staff/PrivateCompanyReceipt" class="nav-link @(IsActive("/Dashboard/Staff/PrivateCompanyReceipt") ? "active" : "")">
+                                <i class="bi bi-circle me-2" style="font-size: 0.5rem;"></i> Private Company Receipt
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>
@@ -57,6 +70,11 @@
             <li class="nav-item">
                 <a href="/Dashboard/Staff/Approvals" class="nav-link @(IsActive("/Dashboard/Staff/Approvals") ? "active" : "")">
                     <i class="bi bi-check2-square me-2"></i> Approvals
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/Dashboard/Staff/TransportPayments" class="nav-link @(IsActive("/Dashboard/Staff/TransportPayments") ? "active" : "")">
+                    <i class="bi bi-truck me-2"></i> Transport Payments
                 </a>
             </li>
 
@@ -233,12 +251,25 @@
                 collapses.forEach(c => {
                     if (!c.contains(link)) {
                         const bsCollapse = bootstrap.Collapse.getInstance(c);
-                        if (bsCollapse) {
-                            bsCollapse.hide();
-                        }
+                        if (bsCollapse) bsCollapse.hide();
                     }
                 });
             });
         });
     });
+
+    // Sidebar collapse/expand
+    (function(){
+        var collapsed = localStorage.getItem('sidebarCollapsed')==='1';
+        if(collapsed) _applyCollapse(true);
+        function _applyCollapse(c){
+            var b=document.body, ic=document.getElementById('sidebarToggleIcon');
+            c ? b.classList.add('sidebar-collapsed') : b.classList.remove('sidebar-collapsed');
+            if(ic){ ic.className = c ? 'bi bi-chevron-right' : 'bi bi-chevron-left'; }
+        }
+        window.toggleSidebarCollapse=function(){
+            var c=!document.body.classList.contains('sidebar-collapsed');
+            _applyCollapse(c); localStorage.setItem('sidebarCollapsed',c?'1':'0');
+        };
+    })();
 </script>

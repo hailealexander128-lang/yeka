@@ -24,6 +24,12 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
         [BindProperty]
         public decimal DefaultPricePerKg { get; set; } = 1.4m;
 
+        // ── Transport Defaults ──
+        [BindProperty]
+        public decimal DefaultTransportRatePerKg { get; set; } = 2.5m;
+        [BindProperty]
+        public decimal DefaultKg { get; set; } = 100m;
+
         // ── Create User ──
         [BindProperty]
         public string NewUserName { get; set; } = "";
@@ -52,9 +58,18 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
 
             var value = await connection.QueryFirstOrDefaultAsync<string>(
                 "SELECT setting_value FROM system_settings WHERE setting_key = 'DefaultPricePerKg'");
-
             if (value != null && decimal.TryParse(value, out var price))
                 DefaultPricePerKg = price;
+
+            var rateVal = await connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT setting_value FROM system_settings WHERE setting_key = 'DefaultTransportRatePerKg'");
+            if (rateVal != null && decimal.TryParse(rateVal, out var rate))
+                DefaultTransportRatePerKg = rate;
+
+            var kgVal = await connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT setting_value FROM system_settings WHERE setting_key = 'DefaultKg'");
+            if (kgVal != null && decimal.TryParse(kgVal, out var kg))
+                DefaultKg = kg;
         }
 
         // ── Save Pricing ──
@@ -76,6 +91,34 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
                     new { Value = DefaultPricePerKg.ToString() });
 
             TempData["SuccessMessage"] = "Pricing settings saved successfully.";
+            return RedirectToPage();
+        }
+
+        // ── Save Transport Defaults ──
+        public async Task<IActionResult> OnPostSaveTransportDefaultsAsync()
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            await EnsureSettingsTableExistsAsync(connection);
+
+            foreach (var (key, val) in new[]
+            {
+                ("DefaultTransportRatePerKg", DefaultTransportRatePerKg.ToString()),
+                ("DefaultKg",                 DefaultKg.ToString()),
+            })
+            {
+                var exists = await connection.QueryFirstOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM system_settings WHERE setting_key = @Key", new { Key = key });
+                if (exists > 0)
+                    await connection.ExecuteAsync(
+                        "UPDATE system_settings SET setting_value = @Val WHERE setting_key = @Key",
+                        new { Val = val, Key = key });
+                else
+                    await connection.ExecuteAsync(
+                        "INSERT INTO system_settings (setting_key, setting_value) VALUES (@Key, @Val)",
+                        new { Key = key, Val = val });
+            }
+
+            TempData["SuccessMessage"] = "Transport defaults saved successfully.";
             return RedirectToPage();
         }
 

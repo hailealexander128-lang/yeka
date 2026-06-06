@@ -65,6 +65,7 @@ app.UseRouting();
 app.UseCors("AllowAll"); // Enable CORS
 app.UseSession();
 
+
 app.Use(async (context, next) =>
 {
     var userId = context.Session.GetInt32("UserId");
@@ -82,10 +83,8 @@ app.MapGet("/Dashboard/Staff", (HttpContext context) =>
     return Results.Empty;
 });
 
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 app.MapControllers(); // Added for Mobile API
 
-Console.WriteLine("[Startup] Application running on http://localhost:5000");
-app.Run("http://localhost:5000");
+Console.WriteLine("[Startup] Application running on http://0.0.0.0:5000 (all interfaces)");
+app.Run("http://0.0.0.0:5000");

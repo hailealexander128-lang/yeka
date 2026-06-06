@@ -2,10 +2,52 @@
 @model CleaningManagmentSystem.Pages.Dashboard.Staff.OutsourceReceiptModel
 @{
     Layout = "/Pages/Dashboard/Staff/_StaffLayout.cshtml";
-
     ViewData["Title"] = "Staff Dashboard - Receipt Registration";
-
     var isEditMode = Model.EditMode == "true";
+
+    // ── Receipt step tracker helper ─────────────────────────────
+    string receiptStepTracker(string status)
+    {
+        bool isRejected = status == "Rejected" || status == "MahberatRejected";
+        if (isRejected)
+        {
+            string who = status == "MahberatRejected" ? "Mahberat (Level 1)" : "Staff (Level 2)";
+            return $@"<div class=""d-flex align-items-center gap-2 py-1"">
+                <span class=""badge bg-danger px-3 py-2""><i class=""bi bi-x-circle me-1""></i>Rejected by {who}</span>
+                <small class=""text-muted"">This receipt was rejected.</small>
+            </div>";
+        }
+        var steps = new[] {
+            ("Registered", "① Registered",     "Staff"),
+            ("Mahberat ✓", "② Mahberat Review", "Mahberat"),
+            ("Approved",   "③ Staff Approved",  "Staff"),
+            ("Billed",     "④ Billed",          "Staff"),
+            ("Paid",       "⑤ Paid",            "Finance"),
+        };
+        int idx = status switch {
+            "Registered" => 0,
+            "Pending"    => 1,   // waiting for mahberat
+            "Approved"   => 2,
+            "Billed"     => 3,
+            "Paid"       => 4,
+            _            => 0
+        };
+        var sb = new System.Text.StringBuilder();
+        sb.Append(@"<div class=""rcp-flow"">");
+        for (int i = 0; i < steps.Length; i++)
+        {
+            var (key, label, actor) = steps[i];
+            string cls = i < idx ? "rcp-done" : (i == idx ? "rcp-active" : "");
+            string icon = i < idx ? "✓" : (i + 1).ToString();
+            sb.Append($@"<div class=""rcp-item {cls}"">
+                <div class=""rcp-circle"">{icon}</div>
+                <div class=""rcp-label"">{label}</div>
+                <div class=""rcp-actor"">{actor}</div>
+            </div>");
+        }
+        sb.Append("</div>");
+        return sb.ToString();
+    }
 }
 
 <div class="main-content p-4">
@@ -276,6 +318,12 @@
                                                     }
                                                 </td>
                                             </tr>
+                                            <!-- Step tracker row -->
+                                            <tr class="table-light">
+                                                <td colspan="11" class="pt-0 pb-2 px-2">
+                                                    @Html.Raw(receiptStepTracker(r.status?.ToString() ?? "Registered"))
+                                                </td>
+                                            </tr>
                                         }
 
                                     }
@@ -464,20 +512,31 @@
             border-color: #008080;
             box-shadow: 0 0 0 0.25rem rgba(0, 128, 128, 0.25);
         }
-
         .btn-primary {
             background-color: #008080;
             border-color: #008080;
         }
-
         .btn-primary:hover {
             background-color: #006666;
             border-color: #006666;
         }
+        td form { display: inline; }
 
-        td form {
-            display: inline;
-        }
+        /* ── Receipt 4-Step Progress Tracker ── */
+        .rcp-flow{display:flex;align-items:flex-start;padding:6px 0;gap:0}
+        .rcp-item{display:flex;flex-direction:column;align-items:center;min-width:90px;position:relative;flex:1}
+        .rcp-item:not(:last-child)::after{content:'';position:absolute;top:14px;left:calc(50% + 15px);right:calc(-50% + 15px);height:3px;background:#dee2e6;z-index:0}
+        .rcp-item:not(:last-child).rcp-done::after{background:#198754}
+        .rcp-item:not(:last-child).rcp-active::after{background:linear-gradient(90deg,#198754 50%,#dee2e6 50%)}
+        .rcp-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;z-index:1;position:relative;border:3px solid #dee2e6;background:#fff;color:#adb5bd}
+        .rcp-done .rcp-circle{background:#198754;border-color:#198754;color:#fff}
+        .rcp-active .rcp-circle{background:#fff;border-color:#198754;color:#198754;box-shadow:0 0 0 4px rgba(25,135,84,.15)}
+        .rcp-rejected .rcp-circle{background:#dc3545;border-color:#dc3545;color:#fff}
+        .rcp-label{font-size:10px;text-align:center;margin-top:4px;line-height:1.3;color:#6c757d;max-width:88px}
+        .rcp-done .rcp-label{color:#198754;font-weight:600}
+        .rcp-active .rcp-label{color:#198754;font-weight:700}
+        .rcp-rejected .rcp-label{color:#dc3545;font-weight:600}
+        .rcp-actor{font-size:9px;text-align:center;color:#adb5bd;max-width:88px;margin-top:1px}
     </style>
 }
 

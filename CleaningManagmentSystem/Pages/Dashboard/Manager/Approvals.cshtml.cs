@@ -19,6 +19,7 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
 
         public List<dynamic> PendingSubmissions { get; set; } = new();
         public List<dynamic> HistorySubmissions { get; set; } = new();
+        public List<dynamic> MonthlyReceipts { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public string SearchQuery { get; set; } = "";
@@ -105,6 +106,15 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
 
             HistorySubmissions = (await connection.QueryAsync(historyQuery,
                 new { HSearch = "%" + HistorySearch + "%" })).ToList();
+
+            // ── Monthly Receipts ──
+            var monthlyQuery = @"
+                SELECT id, receipt_number as receiptNumber, month, year, total_amount as totalAmount,
+                       paid_amount as paidAmount, balance, status, source, created_at as createdAt
+                FROM monthly_receipts
+                WHERE status IN ('Level 1 Approved', 'Paid')
+                ORDER BY created_at DESC LIMIT 100";
+            MonthlyReceipts = (await connection.QueryAsync(monthlyQuery)).ToList();
         }
 
         public async Task<IActionResult> OnPostApproveAsync(int id, string receiptType, decimal totalPrice)
@@ -130,6 +140,13 @@ namespace CleaningManagmentSystem.Pages.Dashboard.Manager
             var table = receiptType == "Outsource" ? "outsource_receipts" : "staff_receipts";
             await connection.ExecuteAsync($"UPDATE {table} SET status = 'Rejected' WHERE id = @Id", new { Id = id });
             return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostApproveMonthlyAsync(int id)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            await connection.ExecuteAsync("UPDATE monthly_receipts SET status = 'Paid', updated_at = NOW() WHERE id = @Id", new { Id = id });
+            return RedirectToPage(new { tab = "monthly" });
         }
     }
 }

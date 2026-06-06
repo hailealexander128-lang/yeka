@@ -1,10 +1,11 @@
 class UserModel {
   final int id;
   final String name;
-  final String role; // 'driver' or 'outsource'
+  final String role; // 'driver', 'outsource', 'PrivateCompanyRep'
   final String phone;
   final int? vehicleId;
   final String? vehicleName;
+  final String? companyName;
 
   UserModel({
     required this.id,
@@ -13,30 +14,32 @@ class UserModel {
     required this.phone,
     this.vehicleId,
     this.vehicleName,
+    this.companyName,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      name: json['name'] ?? '',
-      role: json['role'] ?? 'outsource',
-      phone: json['phone'] ?? '',
-      vehicleId: json['vehicleId'],
+      id:          json['id'],
+      name:        json['name']        ?? '',
+      role:        json['role']        ?? '',
+      phone:       json['phone']       ?? '',
+      vehicleId:   json['vehicleId'],
       vehicleName: json['vehicleName'],
+      companyName: json['companyName'],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'role': role,
-      'phone': phone,
-      'vehicleId': vehicleId,
-      'vehicleName': vehicleName,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id':          id,
+    'name':        name,
+    'role':        role,
+    'phone':       phone,
+    'vehicleId':   vehicleId,
+    'vehicleName': vehicleName,
+    'companyName': companyName,
+  };
 
-  bool get isDriver => role.toLowerCase() == 'driver';
-  bool get isOutsource => role.toLowerCase() == 'outsource';
+  bool get isDriver             => role.toLowerCase() == 'driver';
+  bool get isOutsource          => role.toLowerCase() == 'outsource';
+  bool get isPrivateCompanyRep  => role.toLowerCase() == 'privatecompanyrep';
 }
