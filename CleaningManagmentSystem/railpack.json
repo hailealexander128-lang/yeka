@@ -1,0 +1,11 @@
+{
+  "install": {
+    "cmd": "dotnet restore CleaningManagmentSystem.csproj"
+  },
+  "build": {
+    "cmd": "dotnet publish CleaningManagmentSystem.csproj --no-restore -c Release -o out"
+  },
+  "deploy": {
+    "startCmd": "ASPNETCORE_URLS=http://0.0.0.0:${PORT:-3000} ./out/CleaningManagmentSystem"
+  }
+}
