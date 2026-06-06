@@ -1,4 +1,7 @@
 {
+  "dotnet": {
+    "version": "10"
+  },
   "install": {
     "cmd": "dotnet restore CleaningManagmentSystem.csproj"
   },
