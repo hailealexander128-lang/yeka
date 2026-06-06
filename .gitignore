@@ -1,0 +1,14 @@
+# Flutter build output
+cleanapp/build/
+cleanapp/android/app/build/
+cleanapp/.dart_tool/
+
+# .NET build output
+CleaningManagmentSystem/bin/
+CleaningManagmentSystem/obj/
+CleaningManagmentSystem/Scripts/bin/
+CleaningManagmentSystem/Scripts/obj/
+
+# VS files
+*.user
+.vs/
